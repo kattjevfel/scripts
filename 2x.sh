@@ -16,7 +16,7 @@ out="/mnt/jupiter/Temp/2x_done"
 # Converter
 waifu="$HOME/waifu2x-converter-cpp/out/waifu2x-converter-cpp"
 
-# Arguments (verbose, recursive, subdirs, no autonaming)
+# Arguments (less verbose, recursive, subdirs, no autonaming)
 args="-v 1 -r 1 -g 1 -f webp -n 0 -i $in -o $out"
 
 
@@ -42,6 +42,6 @@ if [ -z "$errors" ]; then
     echo "Check out file://$log for more details."
 else
     echo -e "\e[0;32mNo errors detected, deleting source files!\e[0m"
-    rm $files && echo "Source files deleted."
+    rm $files && echo "Source files deleted." #This breaks with files containing spaces, you'll have to remove them manually.
     rm "$log"
 fi
