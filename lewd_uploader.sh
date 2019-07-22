@@ -1,6 +1,6 @@
 #!/bin/sh
 savedir="$(xdg-user-dir PICTURES)/Screenshots"
-date=`date '+%Y-%m-%d_%H-%M-%S'`
+date=$(date '+%Y-%m-%d_%H-%M-%S')
 host="https://lewd.se/upload"
 token="YOUR TOKEN GOES HERE (https://lewd.se/user)"
 clip="xclip -f -selection clip"
@@ -15,10 +15,10 @@ clip="xclip -f -selection clip"
 
 
 # Create directory if it doesn't exist
-if [ ! -d $savedir ]; then
-  mkdir -p $savedir;
+if [ ! -d "$savedir" ]; then
+  mkdir -p "$savedir";
 fi
-
+ 
 if [ $# -eq 0 ]
 then
     echo "Missing options! (run $0 -h for help)"
@@ -31,7 +31,7 @@ while getopts "hfawF" OPTION; do
             spectacle -f -bno "$savedir/$date.png"
             convert "$savedir/$date.png" -define webp:lossless=true "$savedir/$date.webp"
             rm -f "$savedir/$date.png"
-            curl -s -X POST -F "file=@$savedir/$date.webp" -H "token: $token" $host | egrep -o "(https://){1}[^'\"]+" | head -1 | tr -d '\n' | $clip
+            curl -s -X POST -F "file=@$savedir/$date.webp" -H "token: $token" $host | grep -E -o "(https://){1}[^'\"]+" | head -1 | tr -d '\n' | $clip
             notify-send -u low -t 2000 -c "transfer.complete" "$date.webp uploaded!"
         ;;
 
@@ -40,7 +40,7 @@ while getopts "hfawF" OPTION; do
             spectacle -a -bno "$savedir/$date.png"
             convert "$savedir/$date.png" -define webp:lossless=true "$savedir/$date.webp"
             rm -f "$savedir/$date.png"
-            curl -s -X POST -F "file=@$savedir/$date.webp" -H "token: $token" $host | egrep -o "(https://){1}[^'\"]+" | head -1 | tr -d '\n' | $clip
+            curl -s -X POST -F "file=@$savedir/$date.webp" -H "token: $token" $host | grep -E -o "(https://){1}[^'\"]+" | head -1 | tr -d '\n' | $clip
             notify-send -u low -t 2000 -c "transfer.complete" "$date.webp uploaded!"
         ;;
 
@@ -48,14 +48,14 @@ while getopts "hfawF" OPTION; do
             spectacle -r -bno "$savedir/$date.png"
             convert "$savedir/$date.png" -define webp:lossless=true "$savedir/$date.webp"
             rm -f "$savedir/$date.png"
-            curl -s -X POST -F "file=@$savedir/$date.webp" -H "token: $token" $host | egrep -o "(https://){1}[^'\"]+" | head -1 | tr -d '\n' | $clip
+            curl -s -X POST -F "file=@$savedir/$date.webp" -H "token: $token" $host | grep -E -o "(https://){1}[^'\"]+" | head -1 | tr -d '\n' | $clip
             notify-send -u low -t 2000 -c "transfer.complete" "$date.webp uploaded!"
         ;;
 
         F)
-            curl --progress-bar -X POST -F "file=@$2" -H "token: $token" $host | egrep -o "(https://){1}[^'\"]+" | head -1
+            curl --progress-bar -X POST -F "file=@$2" -H "token: $token" $host | grep -E -o "(https://){1}[^'\"]+" | head -1
         ;;
- 
+
         h)
             echo "Usage:"
             echo "   -h     take a wild guess dumbass"
@@ -65,6 +65,10 @@ while getopts "hfawF" OPTION; do
             echo "   -a     area screenshot"
             echo ""
             echo "   -F     upload file"
+        ;;
+
+        *)
+            echo "What the fuck did you just bring upon this cursed land"
         ;;
 
     esac
