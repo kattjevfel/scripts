@@ -32,8 +32,8 @@ sed -i '1d;$d' "$log"
 # Check for errors
 errors=$(grep -o "0 files errored" "$log" | awk '{print $1}')
 
-# All files processed, with full paths
-files=$(grep -oP '"\K[^"\047]+(?=["\047])' "$log" | awk -v prefix="$in/" '{print prefix $0}' | tr '\n' ' ')
+# All files processed, with full paths and single quotes
+files=$(grep -oP '"\K[^"\047]+(?=["\047])' "$log" | awk -v prefix="/mnt/jupiter/Temp/2x_waiting/" '{print prefix $0}' | sed -e "s/'/'\\\\''/g;s/\(.*\)/'\1'/")
 
 # Delete source files and log if no errors, otherwise scream
 if [ -z "$errors" ]; then
@@ -42,6 +42,6 @@ if [ -z "$errors" ]; then
     echo "Check out file://$log for more details."
 else
     echo -e "\e[0;32mNo errors detected, deleting source files!\e[0m"
-    rm $files && echo "Source files deleted." #This breaks with files containing spaces, you'll have to remove them manually.
+    echo "$files" | xargs rm
     rm "$log"
 fi
