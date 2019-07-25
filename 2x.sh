@@ -33,7 +33,7 @@ sed -i '1d;$d' "$log"
 errors=$(grep -o "0 files errored" "$log" | awk '{print $1}')
 
 # All files processed, with full paths and single quotes
-files=$(grep -oP '"\K[^"\047]+(?=["\047])' "$log" | awk -v prefix="/mnt/jupiter/Temp/2x_waiting/" '{print prefix $0}' | sed -e "s/'/'\\\\''/g;s/\(.*\)/'\1'/")
+files=$(grep -oP '"\K[^"\047]+(?=["\047])' "$log" | awk -v prefix="$in/" '{print prefix $0}' | sed -e "s/'/'\\\\''/g;s/\(.*\)/'\1'/")
 
 # Delete source files and log if no errors, otherwise scream
 if [ -z "$errors" ]; then
