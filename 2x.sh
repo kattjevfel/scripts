@@ -14,7 +14,7 @@ in="/mnt/jupiter/Temp/2x_waiting"
 out="/mnt/jupiter/Temp/2x_done"
 
 # Converter
-waifu="$HOME/waifu2x-converter-cpp/out/waifu2x-converter-cpp"
+waifu="/usr/bin/waifu2x-converter-cpp"
 
 # Arguments (less verbose, recursive, subdirs, no autonaming)
 args="-v 1 -r 1 -g 1 -f webp -n 0 -i $in -o $out"
