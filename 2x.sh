@@ -4,9 +4,6 @@
 
 # Setup
 
-# Create log file
-log=$(mktemp)
-
 # Input directory
 in="/mnt/jupiter/Temp/2x_waiting"
 
@@ -16,14 +13,19 @@ out="/mnt/jupiter/Temp/2x_done"
 # Converter
 waifu="/usr/bin/waifu2x-converter-cpp"
 
-# Arguments (less verbose, recursive, subdirs, no autonaming)
+# Arguments (less verbose, recursive, format, subdirs, no autonaming)
 args="-v 1 -r 1 -g 1 -f webp -n 0 -i $in -o $out"
 
+# Check if there's any files to process
+if [ -z "$(ls -A $in)" ]; then
+   echo "No files to process, exiting!"
+   exit 1
+fi
 
 
-# Let's go!
+# Create log file and get going
+log=$(mktemp)
 script -q -c "$waifu $args" "$log"
-
 
 
 # Clean output
