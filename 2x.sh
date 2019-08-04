@@ -46,5 +46,5 @@ else
     echo -e "\e[0;32mNo errors detected, deleting source files!\e[0m"
     echo "$files" | xargs rm
     rm "$log"
-    find "$in" -empty -delete
+    find "$in"/* -empty -delete
 fi
