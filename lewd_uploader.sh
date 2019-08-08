@@ -11,12 +11,12 @@ while getopts "hfl" OPTION; do
     case $OPTION in
 
         f)
-            curl --progress-bar -X POST -F "file=@$2" -H "token: $token" $host | grep -E -o "(https://){1}[^'\"]+" | head -1
+            curl -X POST -F "file=@$2" -H "token: $token" $host | grep -E -o "(https://){1}[^'\"]+" | head -1
         ;;
 
         l)
             while read -r LINE
-                do curl --progress-bar -X POST -F "file=@$LINE" -H "token: $token" $host | grep -E -o "(https://){1}[^'\"]+" | head -1
+                do curl -X POST -F "file=@$LINE" -H "token: $token" $host | grep -E -o "(https://){1}[^'\"]+" | head -1
             done < "$2"
         ;;
 
