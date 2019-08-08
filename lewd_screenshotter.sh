@@ -9,7 +9,6 @@ clip="xclip -f -selection clip"
 # - Spectacle (KDE screenshot tool)
 # - curl
 # - xclip (for clipboarding)
-# - imagemagick (for webp, comment out accordingly otherwise)
 
 # For ease of use set up hotkeys in KDE, remember to use full paths.
 
@@ -29,31 +28,25 @@ while getopts "hfawF" OPTION; do
 
         f)
             spectacle -f -bno "$savedir/$date.png"
-            convert "$savedir/$date.png" -define webp:lossless=true "$savedir/$date.webp"
-            rm -f "$savedir/$date.png"
-            curl -s -X POST -F "file=@$savedir/$date.webp" -H "token: $token" $host | grep -E -o "(https://){1}[^'\"]+" | head -1 | tr -d '\n' | $clip
-            notify-send -u low -t 2000 -c "transfer.complete" "$date.webp uploaded!"
+            curl -s -X POST -F "file=@$savedir/$date.png" -H "token: $token" $host | grep -Po '"link": *\K"[^"]*"' | tr -d '"' | tr -d '\n' | $clip
+            notify-send -u low -t 2000 -c "transfer.complete" "$date.png uploaded!"
         ;;
 
 
         w)
             spectacle -a -bno "$savedir/$date.png"
-            convert "$savedir/$date.png" -define webp:lossless=true "$savedir/$date.webp"
-            rm -f "$savedir/$date.png"
-            curl -s -X POST -F "file=@$savedir/$date.webp" -H "token: $token" $host | grep -E -o "(https://){1}[^'\"]+" | head -1 | tr -d '\n' | $clip
-            notify-send -u low -t 2000 -c "transfer.complete" "$date.webp uploaded!"
+            curl -s -X POST -F "file=@$savedir/$date.png" -H "token: $token" $host | grep -Po '"link": *\K"[^"]*"' | tr -d '"' | tr -d '\n' | $clip
+            notify-send -u low -t 2000 -c "transfer.complete" "$date.png uploaded!"
         ;;
 
         a)
             spectacle -r -bno "$savedir/$date.png"
-            convert "$savedir/$date.png" -define webp:lossless=true "$savedir/$date.webp"
-            rm -f "$savedir/$date.png"
-            curl -s -X POST -F "file=@$savedir/$date.webp" -H "token: $token" $host | grep -E -o "(https://){1}[^'\"]+" | head -1 | tr -d '\n' | $clip
-            notify-send -u low -t 2000 -c "transfer.complete" "$date.webp uploaded!"
+            curl -s -X POST -F "file=@$savedir/$date.png" -H "token: $token" $host | grep -Po '"link": *\K"[^"]*"' | tr -d '"' | tr -d '\n' | $clip
+            notify-send -u low -t 2000 -c "transfer.complete" "$date.png uploaded!"
         ;;
 
         F)
-            curl -X POST -F "file=@$2" -H "token: $token" $host | grep -E -o "(https://){1}[^'\"]+" | head -1
+            curl -X POST -F "file=@$2" -H "token: $token" $host | grep -Po '"link": *\K"[^"]*"' | tr -d '"'
         ;;
 
         h)
