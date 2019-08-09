@@ -1,8 +1,6 @@
 #!/bin/sh
-
 # Downloads all images from twitter post
 
-# Stop if user is mentally challenged
 if [ $# -eq 0 ]
 then
     echo "Usage: $0 *twitter post*"
