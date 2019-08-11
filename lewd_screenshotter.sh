@@ -1,14 +1,29 @@
 #!/bin/sh
+
+# lewd.se screenshotter (and duct taped on file uploader)
+# For use only with KDE, as I don't care about other DEs.
+
+
+# Where the screenshots are kept
 savedir="$(xdg-user-dir PICTURES)/Screenshots"
-date=$(date '+%Y-%m-%d_%H-%M-%S')
+# Filename format
+format=$(date '+%Y-%m-%d_%H-%M-%S')
+# Clipboard tool
+clip="xclip -f -selection clip"
+# Get active window name, comment out to disable
+currentwindow="$(cat /proc/$(xdotool getwindowpid $(xdotool getwindowfocus))/comm)_"
+
+# lewd.se stuff
 host="https://lewd.se/upload"
 token="YOUR TOKEN GOES HERE (https://lewd.se/user)"
-clip="xclip -f -selection clip"
+shorturl="false"
+
 
 # Requirements:
 # - Spectacle (KDE screenshot tool)
 # - curl
 # - xclip (for clipboarding)
+# - xdotool (for getting current title, )
 
 # For ease of use set up hotkeys in KDE, remember to use full paths.
 
@@ -27,26 +42,26 @@ while getopts "hfawF" OPTION; do
     case $OPTION in
 
         f)
-            spectacle -f -bno "$savedir/$date.png"
-            curl -s -X POST -F "file=@$savedir/$date.png" -H "token: $token" $host | grep -Po '"link": *\K"[^"]*"' | tr -d '"' | tr -d '\n' | $clip
-            notify-send -u low -t 2000 -c "transfer.complete" "$date.png uploaded!"
+            spectacle -f -bno "$savedir/$format.png"
+            curl -s -X POST -F "file=@$savedir/$format.png" -H "shortUrl: $shorturl" -H "token: $token" $host | grep -Po '"link": *\K"[^"]*"' | tr -d '"' | tr -d '\n' | $clip
+            notify-send -u low -t 2000 -c "transfer.complete" "$format.png uploaded!"
         ;;
 
 
         w)
-            spectacle -a -bno "$savedir/$date.png"
-            curl -s -X POST -F "file=@$savedir/$date.png" -H "token: $token" $host | grep -Po '"link": *\K"[^"]*"' | tr -d '"' | tr -d '\n' | $clip
-            notify-send -u low -t 2000 -c "transfer.complete" "$date.png uploaded!"
+            spectacle -a -bno "$savedir/$currentwindow$format.png"
+            curl -s -X POST -F "file=@$savedir/$currentwindow$format.png" -H "shortUrl: $shorturl" -H "token: $token" $host | grep -Po '"link": *\K"[^"]*"' | tr -d '"' | tr -d '\n' | $clip
+            notify-send -u low -t 2000 -c "transfer.complete" "$currentwindow$format.png uploaded!"
         ;;
 
         a)
-            spectacle -r -bno "$savedir/$date.png"
-            curl -s -X POST -F "file=@$savedir/$date.png" -H "token: $token" $host | grep -Po '"link": *\K"[^"]*"' | tr -d '"' | tr -d '\n' | $clip
-            notify-send -u low -t 2000 -c "transfer.complete" "$date.png uploaded!"
+            spectacle -r -bno "$savedir/$format.png"
+            curl -s -X POST -F "file=@$savedir/$format.png" -H "shortUrl: $shorturl" -H "token: $token" $host | grep -Po '"link": *\K"[^"]*"' | tr -d '"' | tr -d '\n' | $clip
+            notify-send -u low -t 2000 -c "transfer.complete" "$format.png uploaded!"
         ;;
 
         F)
-            curl -X POST -F "file=@$2" -H "token: $token" $host | grep -Po '"link": *\K"[^"]*"' | tr -d '"'
+            curl -X POST -F "file=@$2" -H "shortUrl: $shorturl" -H "token: $token" $host | grep -Po '"link": *\K"[^"]*"' | tr -d '"'
         ;;
 
         h)
