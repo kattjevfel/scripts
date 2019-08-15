@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Download latest archiso for use with qBittorrent + cron
 
 # Save path
