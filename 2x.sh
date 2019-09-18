@@ -14,7 +14,7 @@ out="/mnt/jupiter/Temp/2x_done"
 waifu="/usr/bin/waifu2x-converter-cpp"
 
 # Arguments (less verbose, recursive, format, subdirs, no autonaming)
-args="-v 1 -r 1 -g 1 -f webp -a 0 -i $in -o $out"
+args="--log-level 1 --recursive-directory 1 --generate-subdir 1 --output-format webp --auto-naming 0 --input $in --output $out"
 
 # Check if there's any files to process
 if [ -z "$(ls -A $in)" ]; then
