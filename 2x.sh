@@ -47,4 +47,5 @@ else
     echo "$files" | xargs rm
     rm "$log"
     find "$in"/* -empty -delete
+    exit 0
 fi
