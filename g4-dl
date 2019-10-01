@@ -18,18 +18,18 @@ echo "Getting list of IDs from $pages pages... (this might take a while)"
 # Get list of ID
 list=\
 "$(
-# Get all pages
-curl -s "https://aryion.com/g4/latest/$1&p=[1-$pages]" | \
-# Get all submissions
-grep view/ | \
-# Get only what's inside of each href
-sed -n 's/.*href="\([^"]*\).*/\1/p' | \
-# Get rid of everything before last slash, leaving only IDs
-grep -o '[^/]*$' | \
-# Add download URL to start of each ID
-awk '{ print "https://aryion.com/g4/data.php?id=" $0; }' | \
-# Newlines to spaces
-tr '\n' ' '
+    # Get all pages
+    curl -s "https://aryion.com/g4/latest/$1&p=[1-$pages]" | \
+    # Get all submissions
+    grep view/ | \
+    # Get only what's inside of each href
+    sed -n 's/.*href="\([^"]*\).*/\1/p' | \
+    # Get rid of everything before last slash, leaving only IDs
+    grep -o '[^/]*$' | \
+    # Add download URL to start of each ID
+    awk '{ print "https://aryion.com/g4/data.php?id=" $0; }' | \
+    # Newlines to spaces
+    tr '\n' ' '
 )"
 
 
