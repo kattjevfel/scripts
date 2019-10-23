@@ -8,8 +8,15 @@ dir=$(mktemp -d)
 # Find latest version
 latestver=$(curl -s https://api.github.com/repos/ytdl-org/youtube-dl/releases/latest | grep tag_name | cut -d\" -f4)
 
+# Quit if already latest version
+if [ "$latestver" = "$(youtube-dl --version)" ]
+then
+    echo "youtube-dl is already the latest version, quitting."
+    exit
+fi
+
 # Find sha256sum of latest version
-hash=$(curl -sL https://github.com/ytdl-org/youtube-dl/releases/download/$latestver/SHA2-256SUMS | grep tar | awk '{print $1;}')
+hash=$(curl -sL "https://github.com/ytdl-org/youtube-dl/releases/download/$latestver/SHA2-256SUMS" | grep tar | awk '{print $1;}')
 
 
 
