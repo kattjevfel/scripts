@@ -1,5 +1,5 @@
 # katt's scripts
-### github kept nagging me to create this file
+### GitHub kept nagging me to create this file
 
 these are some scripts I've made to make my life (and sometimes others) life easier.
 

@@ -73,7 +73,6 @@ while getopts "hfawF" OPTION; do
             screenshotter --fullscreen
         ;;
 
-
         w)
             screenshotter --activewindow
         ;;
