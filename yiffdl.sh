@@ -1,17 +1,23 @@
-#!/bin/sh
-# Tool to download entire pages off of https://yiff.party/
+#!/bin/bash
 
 if [ $# -eq 0 ]
 then
+    echo "This tool downloads full galleries off of yiff.party into your current dir."
+    echo ""
     echo "Usage: $0 *yiff.party ID*"
     exit 1
 fi
 
-# Download list, prettify, get URLs, clean up the output and prepare for mass download.
-list=$(wget -qO- https://yiff.party/$1.json | python -mjson.tool | grep file_url | awk '{print $2}' | tr -d ',' | tr '\n' ' ' | tr -d '"')
+wget --no-verbose --show-progress -i /dev/fd/3 3<<< \
+"$(
+wget -qO- https://yiff.party/"$1".json | \
 
-# Make dir to download into and enter (or exit if shit fails)
-mkdir -p "$1" && cd "$1" || exit
+    # Prettify json
+    python -mjson.tool | \
 
-# Download that shit
-wget --no-verbose --show-progress $list
+    # Get only the file URLs (in quotes)
+    grep -Po '"file_url": *\K"[^"]*"' | \
+
+    # Delete quotes
+    tr -d '"' \
+)"
