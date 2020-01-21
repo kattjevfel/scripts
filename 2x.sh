@@ -37,7 +37,7 @@ then
     exit 1
 else
     echo -e "\e[0;32mNo errors detected, deleting source files!\e[0m"
-    grep -oP '"\K[^"\047]+(?=["\047])' "$log" | awk -v prefix="$in/" '{print prefix $0}' | xargs rm
+    grep -oP '"\K[^"\047]+(?=["\047])' "$log" | awk -v prefix="\"$in/" -v suffix="\"" '{print prefix $0 suffix}' | xargs rm
     rm "$log"
     find "$in"/* -empty -delete 2> /dev/null
     exit 0
