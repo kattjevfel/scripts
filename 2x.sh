@@ -1,8 +1,5 @@
 #!/bin/bash
-# Script to deal with batch waifu2x'ing files and clean up after itself like a good boy.
-
-
-# Setup
+set -e
 
 # Input directory
 in="/mnt/jupiter/Temp/2x_waiting"
@@ -10,41 +7,37 @@ in="/mnt/jupiter/Temp/2x_waiting"
 # Output directory
 out="/mnt/jupiter/Temp/2x_done"
 
-# Converter
-waifu="/usr/bin/waifu2x-converter-cpp"
+# Log file
+log=$(mktemp)
 
-# Arguments (less verbose, recursive, format, subdirs, no autonaming)
-args="--log-level 1 --recursive-directory 1 --generate-subdir 1 --output-format webp --auto-naming 0 --input $in --output $out"
 
 # Check if there's any files to process
 if [ -z "$(ls -A $in)" ]; then
    echo "No files to process, exiting!"
-   exit 1
+   exit 0
 fi
 
 
-# Create log file and get going
-log=$(mktemp)
-script -q -c "$waifu $args" "$log"
+/usr/bin/waifu2x-converter-cpp \
+    --log-level 1 \
+    --recursive-directory 1 \
+    --generate-subdir 1 \
+    --output-format webp \
+    --auto-naming 0 \
+    --tta 1 \
+    --input $in \
+    --output $out | \
+tee "$log"
 
-
-# Clean output
-sed -i '1d;$d' "$log"
-
-# Check for errors
-errors=$(grep -o "0 files errored" "$log" | awk '{print $1}')
-
-# All files processed, with full paths and single quotes
-files=$(grep -oP '"\K[^"\047]+(?=["\047])' "$log" | awk -v prefix="$in/" '{print prefix $0}' | sed -e "s/'/'\\\\''/g;s/\(.*\)/'\1'/")
 
 # Delete source files and log if no errors, otherwise scream
-if [ -z "$errors" ]; then
-    failed=$(grep "too big" "$log" | grep -o '"[^"]\+"')
-    echo -e "\e[0;31mFollowing file(s) are too big for WebP: $failed\e[0m"
-    echo "Check out file://$log for more details."
+if ! grep -q "0 files errored" "$log"
+then
+    echo "Shit's whack yo! Check file://$log for more details."
+    exit 1
 else
     echo -e "\e[0;32mNo errors detected, deleting source files!\e[0m"
-    echo "$files" | xargs rm
+    grep -oP '"\K[^"\047]+(?=["\047])' "$log" | awk -v prefix="$in/" '{print prefix $0}' | xargs rm
     rm "$log"
     find "$in"/* -empty -delete 2> /dev/null
     exit 0

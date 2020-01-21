@@ -2,7 +2,7 @@
 host="https://lewd.se/upload"
 token="YOUR TOKEN GOES HERE (https://lewd.se/user)"
 
-if [ $# -eq 0 ]
+if [ $# -eq 0 ];
 then
     echo "Missing options! (run $0 -h for help)"
 fi

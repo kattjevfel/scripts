@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # lewd.se screenshotter (and duct taped on file uploader)
 # For use only with KDE, as I don't care about other DEs.
@@ -12,6 +13,7 @@ format="$(date '+%Y-%m-%d_%H-%M-%S')"
 maxsize=1048576
 # Clipboard tool
 clip="xclip -f -selection clip"
+
 
 # lewd.se stuff
 host="https://lewd.se/upload"
@@ -30,14 +32,14 @@ shorturl="false"
 
 
 # Create directory if it doesn't exist
-if [ ! -d "$savedir" ]; then
-  mkdir -p "$savedir";
-fi
+[ ! -d "$savedir" ] && mkdir -p "$savedir"
 
-if [ $# -eq 0 ]; then
+if [ $# -eq 0 ];
+then
     echo "Missing options! (run $0 -h for help)"
 fi
- 
+
+
 screenshotter () {
     # The file needs to go *somewhere* before processing
     tempfile=$(mktemp)
@@ -45,10 +47,11 @@ screenshotter () {
     # Take the screenshot
     spectacle "$1" -bno "$tempfile"
 
+    # Exit if file is empty (no screenshot taken)
+    [ ! -s "$tempfile" ] && exit 1
+
     # If we're taking a window screenshot we want to prefix it with the process name
-    if [ "$1" = "--activewindow" ]; then
-        currentwindow="$(cat /proc/$(xdotool getwindowpid $(xdotool getwindowfocus))/comm)_"
-    fi
+    [ "$1" = "--activewindow" ] && currentwindow="$(cat /proc/"$(xdotool getactivewindow getwindowpid)"/comm)_"
 
     # Check filesize and convert if too big
     filesize=$(stat -c%s "$tempfile")
