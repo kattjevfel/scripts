@@ -17,7 +17,8 @@ if [ -z "$(ls -A $in)" ]; then
    exit 0
 fi
 
-
+# Force unbuffered for tee to work properly
+stdbuf -o 0 \
 /usr/bin/waifu2x-converter-cpp \
     --log-level 1 \
     --recursive-directory 1 \
