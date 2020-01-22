@@ -8,8 +8,7 @@ then
     exit 1
 fi
 
-wget --no-verbose --show-progress --input-file /dev/fd/3 3<<< \
-"$(
+wget --no-verbose --show-progress --input-file /dev/fd/3 3<<< "$(
 wget -qO- https://yiff.party/"$1".json | \
 
     # Prettify json
