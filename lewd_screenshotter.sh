@@ -1,43 +1,38 @@
 #!/bin/bash
-set -e
 
 # lewd.se screenshotter (and duct taped on file uploader)
 # For use only with KDE, as I don't care about other DEs.
 
+#       >>> Options <<<
 
-# Where the screenshots are kept
+# Files
 savedir="$HOME/Pictures/Screenshots"
-# Filename format
-format="$(date '+%Y-%m-%d_%H-%M-%S')"
-# Max filesize before going with jpg (in bytes)
-maxsize=1048576
+filename="$(date '+%Y-%m-%d_%H-%M-%S')"
+maxsize=1048576 # Max filesize before going with jpg (in bytes)
+
 # Clipboard tool
-clip="xclip -f -selection clip"
+clip="xclip -f -selection clip -rmlastnl"
 
-
-# lewd.se stuff
+# lewd.se settings
 host="https://lewd.se/upload"
 token="YOUR TOKEN GOES HERE (https://lewd.se/user)"
 shorturl="false"
 
 
-# Requirements:
-# - Spectacle (KDE screenshot tool)
+#       >>> Requirements <<<
+# - Spectacle
 # - curl
 # - imagemagick
-# - xclip (for clipboarding)
-# - xdotool (for getting current title)
-
-# For ease of use set up hotkeys in KDE, remember to use full paths.
+# - xclip
+# - xdotool (opt. for getting windows' process name)
 
 
+#       >>> The fun begins! <<<
 # Create directory if it doesn't exist
 [ ! -d "$savedir" ] && mkdir -p "$savedir"
 
-if [ $# -eq 0 ];
-then
-    echo "Missing options! (run $0 -h for help)"
-fi
+
+[ $# -eq 0 ] && echo "Missing options! (run $0 -h for help)"
 
 
 screenshotter () {
@@ -51,22 +46,35 @@ screenshotter () {
     [ ! -s "$tempfile" ] && exit 1
 
     # If we're taking a window screenshot we want to prefix it with the process name
-    [ "$1" = "--activewindow" ] && currentwindow="$(cat /proc/"$(xdotool getactivewindow getwindowpid)"/comm)_"
+    [ "$1" = "--activewindow" ] && currentwindow="$(</proc/"$(xdotool getactivewindow getwindowpid)"/comm)_"
 
     # Check filesize and convert if too big
     filesize=$(stat -c%s "$tempfile")
     if (( "$filesize" > "$maxsize" )); then
-        output="$savedir/$currentwindow$format.jpg"
+        output="$savedir/$currentwindow$filename.jpg"
         convert -format jpg "$tempfile" "$output"
         rm "$tempfile"
     else
-        output="$savedir/$currentwindow$format.png"
+        output="$savedir/$currentwindow$filename.png"
         mv "$tempfile" "$output"
     fi
     
-    # Upload to lewd.se and do all the stuff
-    curl -s -X POST -F "file=@$output" -H "shortUrl: $shorturl" -H "token: $token" $host | grep -Po '"link": *\K"[^"]*"' | tr -d '"' | tr -d '\n' | $clip
-    notify-send -u low -t 2000 -c "transfer.complete" "$format uploaded!"
+    # Upload file
+    curl --silent \
+        --request POST \
+        --form "file=@$output" \
+        --header "shortUrl: $shorturl" \
+        --header "token: $token" \
+    $host | \
+
+    # Get only URL (inside quotes)
+    grep -Po '"link": *\K"[^"]*"' | \
+
+    # Remove surrounding quotes and add to clipboard
+    tr -d '"' | $clip
+
+    # Send out desktop notifcation
+    notify-send --urgency=low --expire-time=2000 --category="transfer.complete" --icon "/home/katt/Pictures/lewd.svg" "$filename uploaded!"
 }
 
 while getopts "hfawF" OPTION; do
