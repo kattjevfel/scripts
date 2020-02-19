@@ -49,7 +49,6 @@ help () {
 uploader () {
     if [ "$1" = "files" ]; then
         for file in "${@:2}"; do
-            echo $file
             curl --request POST \
                 --form "file=@$file" \
                 --header "shortUrl: $shorturl" \
