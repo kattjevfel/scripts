@@ -1,19 +1,18 @@
 #!/bin/bash
 
-if [ $# -eq 0 ]
-then
-    echo "Downloads all images from twitter post"
-    echo ""
-    echo "Usage: $0 *twitter post*"
-    exit 1
+if [ $# -eq 0 ]; then
+    echo "Downloads all images from a twitter post
+
+Usage: $0 [twitter post URL]"
+    exit
 fi
 
-curl --fail --remote-time --remote-name-all -K /dev/fd/3 3<<< "$( \
-    curl -s "$1" | \
+wget --quiet --show-progress --input-file /dev/fd/3 3<<< "$( \
+    wget -qO- "$1" | \
     grep 'property=\"og:image\"' | \
     grep -Po 'content="*\K"[^"]*"' | \
-    sed -e 's/.*/url=&/' -e 's/:large"/?name=orig"/'
-)"
+    sed -e 's/"//' -e 's/:large"/?name=orig/'
+)" && \
 
 # Rename messed up twitter filenames
 for f in *?name=orig; do
