@@ -1,17 +1,17 @@
 #!/bin/bash
+# lewd.se screenshotter and file uploader
 
-# lewd.se screenshotter (and duct taped on file uploader)
-# For use only with KDE, as I don't care about other DEs.
 
 #       >>> Options <<<
 
-# Files
+# Screenshot related
 savedir="$HOME/Pictures/Screenshots"
 filename="$(date '+%Y-%m-%d_%H-%M-%S')"
 maxsize=1048576 # Max filesize before going with jpg (in bytes)
 
-# Clipboard tool
+# etc
 clip="xclip -f -selection clip -rmlastnl"
+icon="$HOME/Pictures/lewd.svg"
 
 # lewd.se settings
 host="https://lewd.se/upload"
@@ -20,6 +20,7 @@ shorturl="false"
 
 
 #       >>> Requirements <<<
+
 # - Spectacle
 # - curl
 # - imagemagick
@@ -28,14 +29,51 @@ shorturl="false"
 
 
 #       >>> The fun begins! <<<
-# Create directory if it doesn't exist
-[ ! -d "$savedir" ] && mkdir -p "$savedir"
 
+help () {
+    echo "Usage:
+-h  help
 
-[ $# -eq 0 ] && echo "Missing options! (run $0 -h for help)"
+-f  full screenshot
+-w  window screenshot
+-a  area screenshot
 
+-u  upload file(s)
+-l  upload list of files (one file per line)"
+    exit
+}
+
+# Display help if no argument passed
+[ $# -eq 0 ] && help
+
+uploader () {
+    if [ "$1" = "files" ]; then
+        for file in "${@:2}"; do
+            echo $file
+            curl --request POST \
+                --form "file=@$file" \
+                --header "shortUrl: $shorturl" \
+                --header "token: $token" \
+            $host | \
+            
+            # Get only URL (inside quotes)
+            grep -Po '"link": *\K"[^"]*"' | \
+            
+            # Remove surrounding quotes
+            tr -d '"'
+        done
+    elif [ "$1" = "list" ]; then
+        # Allow non-POSIX text files
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            uploader files "$line"
+        done < "$2"
+    fi
+}
 
 screenshotter () {
+    # Create directory if it doesn't exist
+    [ ! -d "$savedir" ] && mkdir -p "$savedir"
+
     # The file needs to go *somewhere* before processing
     tempfile=$(mktemp)
 
@@ -59,57 +97,21 @@ screenshotter () {
         mv "$tempfile" "$output"
     fi
     
-    # Upload file
-    curl --silent \
-        --request POST \
-        --form "file=@$output" \
-        --header "shortUrl: $shorturl" \
-        --header "token: $token" \
-    $host | \
-
-    # Get only URL (inside quotes)
-    grep -Po '"link": *\K"[^"]*"' | \
-
-    # Remove surrounding quotes and add to clipboard
-    tr -d '"' | $clip
+    # Upload file and add to
+    uploader files "$output" | $clip
 
     # Send out desktop notifcation
-    notify-send --urgency=low --expire-time=2000 --category="transfer.complete" --icon "/home/katt/Pictures/lewd.svg" "$filename uploaded!"
+    notify-send --urgency=low --expire-time=2000 --category="transfer.complete" --icon "$icon" "$filename uploaded!"
 }
 
-while getopts "hfawF" OPTION; do
-    case $OPTION in
-
-        f)
-            screenshotter --fullscreen
-        ;;
-
-        w)
-            screenshotter --activewindow
-        ;;
-
-        a)
-            screenshotter --region
-        ;;
-
-        F)
-            curl -X POST -F "file=@$2" -H "shortUrl: $shorturl" -H "token: $token" $host | grep -Po '"link": *\K"[^"]*"' | tr -d '"'
-        ;;
-
-        h)
-            echo "Usage:"
-            echo "   -h     take a wild guess dumbass"
-            echo ""
-            echo "   -f     full screenshot"
-            echo "   -w     window screenshot"
-            echo "   -a     area screenshot"
-            echo ""
-            echo "   -F     upload file"
-        ;;
-
-        *)
-            echo "What the fuck did you just bring upon this cursed land"
-        ;;
-
+while getopts "hawful" options; do
+    case $options in
+        f)  screenshotter --fullscreen;;
+        w)  screenshotter --activewindow;;
+        a)  screenshotter --region;;
+        u)  uploader files "${@:2}";;
+        l)  uploader list "$2";;
+        h)  help;;
+        *)  help;;
     esac
 done
