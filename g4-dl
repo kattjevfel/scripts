@@ -37,7 +37,7 @@ download() {
     filename=$(grep filename <<< "$head" | grep -oP '"\K[^"\047]+(?=["\047])'| tr -d '\015')
 
     # .. and datestamp
-    lastmodified=$(grep last-modified <<< "$head" | sed 's/last-modified: //g' | tr -d : | sed 's/./&:/19;s/./&:/22' | tr -d '\015')
+    lastmodified=$(grep Last-modified <<< "$head" | sed 's/  Last-modified: //g' | tr -d : | sed 's/./&:/19;s/./&:/22' | tr -d '\015')
 
     wget --load-cookies "$cookie" --content-disposition --quiet --show-progress --no-clobber "https://aryion.com/g4/data.php?id=$1"
     touch -d "$lastmodified" "$filename"
