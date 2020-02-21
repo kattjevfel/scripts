@@ -31,7 +31,7 @@ cookie="/home/katt/Downloads/cookies-aryion-com.txt"
 # Correct corrupted modified date and download
 download() {
     # Get header
-    head=$(wget --load-cookies="$cookie" --quiet --server-response --spider "https://aryion.com/g4/data.php?id=$1")
+    head=$(wget --load-cookies="$cookie" --quiet --server-response --spider "https://aryion.com/g4/data.php?id=$1" 2>&1)
 
     # Extract filename
     filename=$(grep filename <<< "$head" | grep -oP '"\K[^"\047]+(?=["\047])'| tr -d '\015')
