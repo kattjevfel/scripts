@@ -5,8 +5,7 @@
 latestver=$(curl -s https://api.github.com/repos/ytdl-org/youtube-dl/releases/latest | grep tag_name | cut -d\" -f4)
 
 # Quit if already latest version
-if [ "$latestver" = "$(youtube-dl --version)" ]
-then
+if [ "$latestver" = "$(youtube-dl --version)" ]; then
     echo "youtube-dl is already the latest version, quitting."
     exit
 fi
@@ -27,4 +26,5 @@ sed -i "/sha256sums/c\sha256sums=('$hash'" PKGBUILD
 sed -i "/pkgrel/c\pkgrel=1" PKGBUILD
 
 # Package, install and clean up
-makepkg -i && rm -rf "$dir"
+makepkg -i
+rm -rf "$dir"

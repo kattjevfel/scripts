@@ -1,7 +1,6 @@
 #!/bin/bash
 # lewd.se screenshotter and file uploader
 
-
 #       >>> Options <<<
 
 # Screenshot related
@@ -18,7 +17,6 @@ host="https://lewd.se/upload"
 token="YOUR TOKEN GOES HERE (https://lewd.se/user)"
 shorturl="false"
 
-
 #       >>> Requirements <<<
 
 # - Spectacle
@@ -27,10 +25,9 @@ shorturl="false"
 # - xclip
 # - xdotool (opt. for getting windows' process name)
 
-
 #       >>> The fun begins! <<<
 
-help () {
+help() {
     echo "Usage:
 -h  help
 
@@ -46,30 +43,30 @@ help () {
 # Display help if no argument passed
 [ $# -eq 0 ] && help
 
-uploader () {
+uploader() {
     if [ "$1" = "files" ]; then
         for file in "${@:2}"; do
             curl --request POST \
                 --form "file=@$file" \
                 --header "shortUrl: $shorturl" \
                 --header "token: $token" \
-            $host | \
-            
-            # Get only URL (inside quotes)
-            grep -Po '"link": *\K"[^"]*"' | \
-            
-            # Remove surrounding quotes
-            tr -d '"'
+                $host |
+
+                # Get only URL (inside quotes)
+                grep -Po '"link": *\K"[^"]*"' |
+
+                # Remove surrounding quotes
+                tr -d '"'
         done
     elif [ "$1" = "list" ]; then
         # Allow non-POSIX text files
         while IFS= read -r line || [[ -n "$line" ]]; do
             uploader files "$line"
-        done < "$2"
+        done <"$2"
     fi
 }
 
-screenshotter () {
+screenshotter() {
     # Create directory if it doesn't exist
     [ ! -d "$savedir" ] && mkdir -p "$savedir"
 
@@ -87,7 +84,7 @@ screenshotter () {
 
     # Check filesize and convert if too big
     filesize=$(stat -c%s "$tempfile")
-    if (( "$filesize" > "$maxsize" )); then
+    if (("$filesize" > "$maxsize")); then
         output="$savedir/$currentwindow$filename.jpg"
         convert -format jpg "$tempfile" "$output"
         rm "$tempfile"
@@ -95,7 +92,7 @@ screenshotter () {
         output="$savedir/$currentwindow$filename.png"
         mv "$tempfile" "$output"
     fi
-    
+
     # Upload file and add to
     uploader files "$output" | $clip
 
@@ -105,12 +102,12 @@ screenshotter () {
 
 while getopts "hawful" options; do
     case $options in
-        f)  screenshotter --fullscreen;;
-        w)  screenshotter --activewindow;;
-        a)  screenshotter --region;;
-        u)  uploader files "${@:2}";;
-        l)  uploader list "$2";;
-        h)  help;;
-        *)  help;;
+    f) screenshotter --fullscreen ;;
+    w) screenshotter --activewindow ;;
+    a) screenshotter --region ;;
+    u) uploader files "${@:2}" ;;
+    l) uploader list "$2" ;;
+    h) help ;;
+    *) help ;;
     esac
 done

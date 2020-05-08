@@ -7,15 +7,15 @@ Usage: $0 [yiff.party ID]"
     exit
 fi
 
-wget --quiet --show-progress --input-file /dev/fd/3 3<<< "$(
-    wget -qO- https://yiff.party/"$1".json | \
+wget --quiet --show-progress --input-file /dev/fd/3 3<<<"$(
+    wget -qO- https://yiff.party/"$1".json |
 
-    # Prettify json
-    python -mjson.tool | \
+        # Prettify json
+        python -mjson.tool |
 
-    # Get only the file URLs (in quotes)
-    grep -Po '"file_url": *\K"[^"]*"' | \
+        # Get only the file URLs (in quotes)
+        grep -Po '"file_url": *\K"[^"]*"' |
 
-    # Delete quotes
-    tr -d '"'
+        # Delete quotes
+        tr -d '"'
 )"
