@@ -54,8 +54,7 @@ elif [ "$mode" = "full" ]; then
     echo "Checking amount of pages..."
     pages="$(
         curl -s "https://aryion.com/g4/latest/$1" |
-            grep -Eo "Page 1 of [[:digit:]]*" |
-            head -n1 |
+            grep -m 1 -o "Page 1 of [[:digit:]]*" |
             awk 'NF>1{print $NF}'
     )"
 

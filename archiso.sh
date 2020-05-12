@@ -8,7 +8,7 @@ path="/mnt/jupiter/OS"
 today=$(date +%Y.%m.%d)
 
 if [ -f "$path/archlinux-$today-x86_64.iso" ]; then
-  exit 0
+    exit 0
 else
-  qbittorrent-nox --save-path=$path --category=OS "$(curl -s https://www.archlinux.org/releng/releases/"$today"/ | grep "magnet:" | grep -o '"[^"]\+"')"
+    qbittorrent-nox --save-path=$path --category=OS "$(curl -s https://www.archlinux.org/releng/releases/"$today"/ | grep "magnet:" | grep -o '"[^"]\+"')"
 fi
