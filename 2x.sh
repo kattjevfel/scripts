@@ -3,12 +3,17 @@ set -e
 
 # Input directory
 in="/mnt/jupiter/Temp/2x_waiting"
-
 # Output directory
 out="/mnt/jupiter/Temp/2x_done"
-
 # Log file
 log=$(mktemp)
+
+cleanup() {
+    rm "$log"
+    find "$in"/* -empty -delete 2>/dev/null
+}
+
+trap cleanup EXIT
 
 # Check if there's any files to process
 if [ -z "$(ls -A $in)" ]; then
@@ -18,7 +23,7 @@ fi
 
 # Force unbuffered for tee to work properly
 stdbuf -o 0 \
-    /usr/bin/waifu2x-converter-cpp \
+    waifu2x-converter-cpp \
     --log-level 1 \
     --recursive-directory 1 \
     --generate-subdir 1 \
@@ -29,14 +34,15 @@ stdbuf -o 0 \
     --output $out |
     tee "$log"
 
-# Delete source files and log if no errors, otherwise scream
+# If there are any errors we want to see them
 if ! grep -q "0 files errored" "$log"; then
-    echo "Shit's whack yo! Check file://$log for more details."
-    exit 1
-else
-    echo -e "\e[0;32mNo errors detected, deleting source files!\e[0m"
-    grep -oP '"\K[^"\047]+(?=["\047])' "$log" | awk -v prefix="\"$in/" -v suffix="\"" '{print prefix $0 suffix}' | xargs rm
-    rm "$log"
-    find "$in"/* -empty -delete 2>/dev/null
-    exit
+    grep failed "$log"
+    echo "Check file://$log for more details."
 fi
+
+# Cleaning up
+
+# Exclude failed files, get all text inside double quotes
+grep -v failed "$log" | grep -oP '(?<=").*(?=")' | \
+# Add back full path and double quotes and delete source files    
+sed -e "s|^|\"$in/|" -e "s|$|\"|" | xargs rm
