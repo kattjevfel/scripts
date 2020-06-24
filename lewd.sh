@@ -73,14 +73,14 @@ screenshotter() {
     # The file needs to go *somewhere* before processing
     tempfile=$(mktemp)
 
+    # If we're taking a window screenshot we want to prefix it with the process name
+    [ "$1" = "--activewindow" ] && currentwindow="$(</proc/"$(xdotool getactivewindow getwindowpid)"/comm)_"
+
     # Take the screenshot
     spectacle "$1" -bno "$tempfile"
 
     # Exit if file is empty (no screenshot taken)
-    [ ! -s "$tempfile" ] && exit 1
-
-    # If we're taking a window screenshot we want to prefix it with the process name
-    [ "$1" = "--activewindow" ] && currentwindow="$(</proc/"$(xdotool getactivewindow getwindowpid)"/comm)_"
+    [ ! -s "$tempfile" ] && exit
 
     # Check filesize and convert if too big
     filesize=$(stat -c%s "$tempfile")
