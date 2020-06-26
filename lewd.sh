@@ -9,7 +9,6 @@ filename="$(date '+%Y-%m-%d_%H-%M-%S')"
 maxsize=1048576 # Max filesize before going with jpg (in bytes)
 
 # etc
-clip="xclip -f -selection clip -rmlastnl"
 icon="$HOME/Pictures/lewd.svg"
 
 # lewd.se settings
@@ -29,11 +28,10 @@ shorturl="false"
 
 help() {
     echo "Usage:
--h  help
 
--f  full screenshot
--w  window screenshot
 -a  area screenshot
+-w  window screenshot
+-f  full screenshot
 
 -u  upload file(s)
 -l  upload list of files (one file per line)"
@@ -44,26 +42,27 @@ help() {
 [ $# -eq 0 ] && help
 
 uploader() {
-    if [ "$1" = "files" ]; then
-        for file in "${@:2}"; do
-            curl --request POST \
-                --form "file=@$file" \
-                --header "shortUrl: $shorturl" \
-                --header "token: $token" \
-                $host |
+    for file in "$@"; do
+        output=$(curl --request POST \
+            --form "file=@$file" \
+            --header "shortUrl: $shorturl" \
+            --header "token: $token" \
+            $host)
+        # If upload isn't successful, tell user
+        if ! echo "$output" | grep -q 'status":200'; then
+            echo "$output"
+            exit
+        fi
+        echo "Link: $(echo "$output" | grep -Po '"link":*"\K[^"]*')"
+        echo "Deletion URL: $(echo "$output" | grep -Po '"deleteionURL":*"\K[^"]*')"
+    done
+}
 
-                # Get only URL (inside quotes)
-                grep -Po '"link": *\K"[^"]*"' |
-
-                # Remove surrounding quotes
-                tr -d '"'
-        done
-    elif [ "$1" = "list" ]; then
-        # Allow non-POSIX text files
-        while IFS= read -r line || [[ -n "$line" ]]; do
-            uploader files "$line"
-        done <"$2"
-    fi
+list() {
+    # Allow non-POSIX text files
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        uploader "$line"
+    done <"$2"
 }
 
 screenshotter() {
@@ -73,7 +72,7 @@ screenshotter() {
     # The file needs to go *somewhere* before processing
     tempfile=$(mktemp)
 
-    # If we're taking a window screenshot we want to prefix it with the process name
+    # If taking a window screenshot, prefix it with the process name
     [ "$1" = "--activewindow" ] && currentwindow="$(</proc/"$(xdotool getactivewindow getwindowpid)"/comm)_"
 
     # Take the screenshot
@@ -85,29 +84,32 @@ screenshotter() {
     # Check filesize and convert if too big
     filesize=$(stat -c%s "$tempfile")
     if (("$filesize" > "$maxsize")); then
-        output="$savedir/$currentwindow$filename.jpg"
-        convert -format jpg "$tempfile" "$output"
+        screenshot="$savedir/$currentwindow$filename.jpg"
+        convert -format jpg "$tempfile" "$screenshot"
         rm "$tempfile"
     else
-        output="$savedir/$currentwindow$filename.png"
-        mv "$tempfile" "$output"
+        screenshot="$savedir/$currentwindow$filename.png"
+        mv "$tempfile" "$screenshot"
     fi
 
-    # Upload file and add to
-    uploader files "$output" | $clip
+    # Load picture into clipboard (only works with png, fuck you xclip!)
+    xclip -selection clipboard -t image/png "$screenshot"
+
+    # Upload file and add to clipboard
+    uploader "$screenshot"
+    echo "$output" | grep -Po '"link":*"\K[^"]*' | xclip -selection clipboard -rmlastnl
 
     # Send out desktop notifcation
     notify-send --urgency=low --expire-time=2000 --category="transfer.complete" --icon "$icon" "$filename uploaded!"
 }
 
-while getopts "hawful" options; do
+while getopts "awful" options; do
     case $options in
-    f) screenshotter --fullscreen ;;
-    w) screenshotter --activewindow ;;
     a) screenshotter --region ;;
-    u) uploader files "${@:2}" ;;
-    l) uploader list "$2" ;;
-    h) help ;;
+    w) screenshotter --activewindow ;;
+    f) screenshotter --fullscreen ;;
+    u) uploader "${@:2}" ;;
+    l) list "$2" ;;
     *) help ;;
     esac
 done
