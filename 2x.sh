@@ -9,6 +9,11 @@ out="/mnt/jupiter/Temp/2x_done"
 log=$(mktemp)
 
 cleanup() {
+    # Exclude failed files, get all text inside double quotes
+    grep --invert-match failed "$log" | grep -oP '(?<=").*(?=")' |
+        # Add back full path and double quotes and delete source files
+        sed -e "s|^|\"$in/|" -e "s|$|\"|" | xargs rm
+
     rm "$log"
     find "$in"/* -empty -delete 2>/dev/null
 }
@@ -39,10 +44,3 @@ if ! grep -q "0 files errored" "$log"; then
     grep failed "$log"
     echo "Check file://$log for more details."
 fi
-
-# Cleaning up
-
-# Exclude failed files, get all text inside double quotes
-grep -v failed "$log" | grep -oP '(?<=").*(?=")' | \
-# Add back full path and double quotes and delete source files    
-sed -e "s|^|\"$in/|" -e "s|$|\"|" | xargs rm
