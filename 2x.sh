@@ -8,6 +8,12 @@ out="/mnt/jupiter/Temp/2x_done"
 # Log file
 log=$(mktemp)
 
+# Check if there's any files to process
+if [ -z "$(ls -A $in)" ]; then
+    echo "No files to process, exiting!"
+    exit
+fi
+
 cleanup() {
     # Exclude failed files, get all text inside double quotes
     grep --invert-match failed "$log" | grep -oP '(?<=").*(?=")' |
@@ -19,12 +25,6 @@ cleanup() {
 }
 
 trap cleanup EXIT
-
-# Check if there's any files to process
-if [ -z "$(ls -A $in)" ]; then
-    echo "No files to process, exiting!"
-    exit
-fi
 
 # Force unbuffered for tee to work properly
 stdbuf -o 0 \
