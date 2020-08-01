@@ -1,10 +1,10 @@
 #!/bin/bash
 # Download stories from fantasyfeeder.com
-baseurl="https://fantasyfeeder.com"
+baseurl=https://fantasyfeeder.com
 tmpfile=$(mktemp)
 
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 [story ID(s)]"
+    echo "Usage: $(basename "$0") [story ID(s)]"
     exit
 fi
 
@@ -29,7 +29,7 @@ download() {
     fi
 
     # Get cover image
-    echo "Downloading cover image..."
+    echo 'Downloading cover image...'
     wget --quiet --show-progress --no-clobber "$(
         grep -m 1 "Upload/Story/Cover" "$tmpfile" |
             # Get string inside single quotes

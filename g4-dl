@@ -1,32 +1,30 @@
 #!/bin/bash
 # Downloads posts from a user on Eka's Portal (g4)
 
+# Optional cookie
+cookie="$HOME/Downloads/cookies-aryion-com.txt"
+
 help() {
-    echo "Usage: $0 [mode] [user/posts]
+    echo "Usage: $(basename "$0") [mode] [user/posts]
 Download posts from Eka's Portal (g4)
 
 Arguments:
-  -h    (H)elp
   -f    (F)ull artist
   -p    Individual (P)osts"
-    exit 1
+    exit
 }
 
 # Options via arguments
-while getopts 'fph' options; do
+while getopts fph options; do
     case $options in
     f) mode=full ;;
     p) mode=post ;;
-    h) help ;;
     *) help ;;
     esac
 done
 
 # Display help if no mode is set
 [ $# -eq 0 ] && help
-
-# Optional cookie
-cookie="/home/katt/Downloads/cookies-aryion-com.txt"
 
 # Correct corrupted modified date and download
 download() {
@@ -44,14 +42,14 @@ download() {
 }
 
 # Check what mode has been selected
-if [ "$mode" = "post" ]; then
+if [ "$mode" = post ]; then
     for postid in "${@:2}"; do
         download "$postid"
     done
     exit
-elif [ "$mode" = "full" ]; then
+elif [ "$mode" = full ]; then
     # Get amount of pages
-    echo "Checking amount of pages..."
+    echo 'Checking amount of pages...'
     pages="$(
         curl -s "https://aryion.com/g4/latest/$1" |
             grep -m 1 -o "Page 1 of [[:digit:]]*" |

@@ -2,19 +2,13 @@
 # lewd.se screenshotter and file uploader
 
 #       >>> Options <<<
-
-# Screenshot related
 savedir="$HOME/Pictures/Screenshots"
 filename="$(date '+%Y-%m-%d_%H-%M-%S')"
 maxsize=1048576 # Max filesize before going with jpg (in bytes)
 
-# etc
+#LEWD_TOKEN='YOUR TOKEN GOES HERE (https://lewd.se/user)'
 icon="$HOME/Pictures/lewd.svg"
-
-# lewd.se settings
-host="https://lewd.se/upload"
-token="YOUR TOKEN GOES HERE (https://lewd.se/user)"
-shorturl="false"
+shorturl=false
 
 #       >>> Requirements <<<
 
@@ -26,15 +20,24 @@ shorturl="false"
 
 #       >>> The fun begins! <<<
 
+# Dependency checking
+for deps in spectacle curl convert xclip; do
+    if [ ! "$(command -v $deps)" ]; then
+        echo "$deps missing!"
+        exit
+    fi
+done
+
+# pls send help
 help() {
-    echo "Usage:
+    echo 'Usage:
 
 -a  area screenshot
 -w  window screenshot
 -f  full screenshot
 
 -u  upload file(s)
--l  upload list of files (one file per line)"
+-l  upload list of files (one file per line)'
     exit
 }
 
@@ -46,8 +49,8 @@ uploader() {
         output=$(curl --request POST \
             --form "file=@$file" \
             --header "shortUrl: $shorturl" \
-            --header "token: $token" \
-            $host)
+            --header "token: $LEWD_TOKEN" \
+            https://lewd.se/upload)
         # If upload isn't successful, tell user
         if ! echo "$output" | grep -q 'status":200'; then
             echo "$output"
@@ -100,10 +103,10 @@ screenshotter() {
     echo "$output" | grep -Po '"link":*"\K[^"]*' | xclip -selection clipboard -rmlastnl
 
     # Send out desktop notifcation
-    notify-send --urgency=low --expire-time=2000 --category="transfer.complete" --icon "$icon" "$filename uploaded!"
+    notify-send --urgency=low --expire-time=2000 --category=transfer.complete --icon "$icon" "$filename uploaded!"
 }
 
-while getopts "awful" options; do
+while getopts awful options; do
     case $options in
     a) screenshotter --region ;;
     w) screenshotter --activewindow ;;

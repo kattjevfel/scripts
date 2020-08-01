@@ -2,7 +2,7 @@
 # Download latest archiso for use with qBittorrent + cron
 
 # Save path
-path="/mnt/jupiter/OS"
+path=/mnt/jupiter/OS
 
 # What day is it today
 today=$(date +%Y.%m.%d)

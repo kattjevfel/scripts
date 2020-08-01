@@ -2,7 +2,7 @@
 # This tool downloads full galleries off of yiff.party into your current dir.
 
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 [yiff.party ID]"
+    echo "Usage: $(basename "$0") [yiff.party ID]"
     exit
 fi
 

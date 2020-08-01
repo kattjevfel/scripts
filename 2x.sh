@@ -2,15 +2,15 @@
 set -e
 
 # Input directory
-in="/mnt/jupiter/Temp/2x_waiting"
+in=/mnt/jupiter/Temp/2x_waiting
 # Output directory
-out="/mnt/jupiter/Temp/2x_done"
+out=/mnt/jupiter/Temp/2x_done
 # Log file
 log=$(mktemp)
 
 # Check if there's any files to process
 if [ -z "$(ls -A $in)" ]; then
-    echo "No files to process, exiting!"
+    echo 'No files to process, exiting!'
     exit
 fi
 
