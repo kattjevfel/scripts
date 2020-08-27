@@ -84,6 +84,9 @@ screenshotter() {
     # Exit if file is empty (no screenshot taken)
     [ ! -s "$tempfile" ] && exit
 
+    # Load picture into clipboard
+    xclip -selection clipboard -t image/png "$tempfile"
+
     # Check filesize and convert if too big
     filesize=$(stat -c%s "$tempfile")
     if (("$filesize" > "$maxsize")); then
@@ -94,9 +97,6 @@ screenshotter() {
         screenshot="$savedir/$currentwindow$filename.png"
         mv "$tempfile" "$screenshot"
     fi
-
-    # Load picture into clipboard (only works with png, fuck you xclip!)
-    xclip -selection clipboard -t image/png "$screenshot"
 
     # Upload file and add to clipboard
     uploader "$screenshot"
