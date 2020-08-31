@@ -14,9 +14,9 @@ cleanup() {
 
 trap cleanup EXIT
 
-download() {
+for storyid in "$@"; do
     # Get main page
-    wget --quiet --output-document="$tmpfile" "$baseurl/stories/view?id=$1"
+    wget --quiet --output-document="$tmpfile" "$baseurl/stories/view?id=$storyid"
 
     # Get title
     title="$(grep -oP "(?<=<h1 class='title'>).*?(?=</h1>)" "$tmpfile")"
@@ -25,7 +25,7 @@ download() {
     if [ "${PWD##*/}" != "$title" ]; then
         echo "Creating and entering directory \"$title\""
         mkdir -p "$title"
-        cd "$title" || exit
+        cd "$title" || exit 1
     fi
 
     # Get cover image
@@ -37,7 +37,7 @@ download() {
             awk -v var="$baseurl" '{print var $0;}'
     )"
 
-    # get total pages
+    # Get total pages
     pages="$(grep -m 1 -o "page 1 of [[:digit:]]*" "$tmpfile" | awk 'NF>1{print $NF}')"
     echo "There are $pages pages!"
 
@@ -47,12 +47,11 @@ download() {
             echo "Page $i already downloaded, skipping..."
             continue
         fi
-        wget --quiet --show-progress --output-document="$i.tmp" "$baseurl/stories/view?id=$1&rowStart=$i"
+        wget --quiet --show-progress --output-document="$i.tmp" "$baseurl/stories/view?id=$storyid&rowStart=$i"
         grep subheading -A 1 "$i.tmp" >"$i.html"
         rm "$i.tmp"
     done
-}
-for storyid in "$@"; do
-    download "$storyid"
+
+    # Leave directory we created earlier
     cd ..
 done
