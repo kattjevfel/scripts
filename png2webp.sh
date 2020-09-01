@@ -7,6 +7,18 @@ if [ $# -eq 0 ]; then
 fi
 
 for file in "$@"; do
+	# Make sure file exists
+	if ! [[ -f $file ]]; then
+		echo "$file is not a file!"
+		continue
+	fi
+
+	# Check that the PNG is not a spy
+	if ! [ "$(file -b --extension "$file")" = png ]; then
+		echo "$file is not a PNG!"
+		continue
+	fi
+
 	# Filesize before converting in bytes & human readable
 	sizepre="$(stat -c '%s' "$file" 2>/dev/null)"
 	sizeprehuman=$(numfmt --to=iec-i --suffix=B --format='%.1f' "$sizepre" 2>/dev/null)
@@ -24,7 +36,7 @@ for file in "$@"; do
 		sizesufhuman=$(numfmt --to=iec-i --suffix=B --format='%.1f' "$sizesuf")
 
 		# Show off fancy stats!
-		echo "Converted ${file%.*}.webp ($sizesufhuman) ($(awk "BEGIN {print $sizesuf/$sizepre}")% of original size)"
+		echo "Converted ${file%.*}.webp ($sizesufhuman) ($(awk "BEGIN {print $sizesuf/$sizepre*100}")% of original size)"
 
 		# Delete original
 		rm "$file"
@@ -32,5 +44,6 @@ for file in "$@"; do
 		echo 'failed! :('
 		# Print error and exit
 		echo -e "\033[0;31m$ERROR\033[0m"
+		continue
 	fi
 done
