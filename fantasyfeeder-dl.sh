@@ -4,7 +4,7 @@ baseurl=https://fantasyfeeder.com
 tmpfile=$(mktemp)
 
 if [ $# -eq 0 ]; then
-    echo "Usage: $(basename "$0") [story ID(s)]"
+    echo "Usage: ${0##*/} [story ID(s)]"
     exit
 fi
 

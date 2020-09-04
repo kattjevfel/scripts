@@ -2,7 +2,7 @@
 # Downloads all images from a twitter post
 
 if [ $# -eq 0 ]; then
-    echo "Usage: $(basename "$0") [twitter post ID]"
+    echo "Usage: ${0##*/} [twitter post ID]"
     exit
 fi
 

@@ -5,7 +5,7 @@
 cookie="$HOME/Downloads/cookies-aryion-com.txt"
 
 help() {
-    echo "Usage: $(basename "$0") [mode] [user/posts]
+    echo "Usage: ${0##*/} [mode] [user/posts]
 Download posts from Eka's Portal (g4)
 
 Arguments:

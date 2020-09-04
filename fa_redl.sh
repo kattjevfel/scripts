@@ -2,7 +2,7 @@
 # Re-download furaffinity pics if you think they're impure
 
 if [ $# -eq 0 ]; then
-    echo "Usage: $(basename "$0") /path/to/files"
+    echo "Usage: ${0##*/} /path/to/files"
     exit
 fi
 

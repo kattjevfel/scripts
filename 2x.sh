@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ $# -eq 0 ]; then
+    echo "Usage: ${0##*/} /path/to/files"
+    exit
+fi
+
 # Input directory
 in=/mnt/jupiter/Temp/2x_waiting
 # Output directory
