@@ -10,12 +10,17 @@ remote="$(echo "$latest" | grep -Po '"fileName": *"\K[^"]*')"
 
 if [ "$local" = "$remote" ]; then
     echo 'Wynntils is up-to-date.'
-else
-    echo 'Wynntils appears to be outdated, downloading latest version..'
-    curl -Ro "$modspath"/"$remote" "https://ci.wynntils.com/job/$channel/lastSuccessfulBuild/artifact/build/libs/$remote" &&
-        rm "$modspath"/"$local"
-    echo 'Changes (latest build only):'
-    echo "$latest" | grep -Po '"msg": *"\K[^"]*'
+    exit
 fi
+
+echo 'Downloading latest version of Wynntils..'
+if curl -Ro "$modspath"/"$remote" "https://ci.wynntils.com/job/$channel/lastSuccessfulBuild/artifact/build/libs/$remote"; then
+    rm "$modspath"/"$local"
+else
+    echo "Download failed, exiting!"
+    exit
+fi
+echo 'Changes (latest build only):'
+echo "$latest" | grep -Po '"msg": *"\K[^"]*'
 
 multimc --launch Wynncraft &
