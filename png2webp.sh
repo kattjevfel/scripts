@@ -6,16 +6,28 @@ if [ $# -eq 0 ]; then
 	exit
 fi
 
+# Colours! 
+cres='\033[0m'		# reset
+cred='\033[0;31m'	# red
+cyel='\033[0;33m'	# yellow
+cgrn='\033[0;32m'	# green
+
 for file in "$@"; do
+	# Filename only
+	shortfile=${file##*/}
+	# Dir only
+	directory=${file%/*}
+
+
 	# Make sure file exists
 	if ! [[ -f $file ]]; then
-		echo "$file is not a file!"
+		echo "$shortfile is not a file!"
 		continue
 	fi
 
 	# Check that the PNG is not a spy
 	if ! [ "$(file -b --extension "$file")" = png ]; then
-		echo "$file is not a PNG!"
+		echo "$shortfile is not a PNG!"
 		continue
 	fi
 
@@ -26,24 +38,26 @@ for file in "$@"; do
 	# Print current file (with path) being processed + size in human readable
 	echo -n "Converting $file ($sizeprehuman)... "
 
-	# Bash can be a nightmare at times, this is how you do STDERR redirects.
-	# ..Moving on, check how the conversion went
 	if ERROR=$({ mogrify -define webp:lossless=true -format webp "$file"; } 2>&1); then
-		echo 'done!'
-
 		# Filesize after converting in bytes & human readable
 		sizesuf="$(stat -c '%s' "${file%.*}".webp)"
 		sizesufhuman=$(numfmt --to=iec-i --suffix=B --format='%.1f' "$sizesuf")
 
+		# Give up if bigger than source
+		if (("$sizesuf" > "$sizepre")); then
+			echo -e "${cyel}done, but ${shortfile%.*}.webp is bigger than the source, deleting output!${cres}"
+			rm "${file%.*}.webp"
+			continue
+		fi
+
 		# Show off fancy stats!
-		echo "Converted ${file%.*}.webp ($sizesufhuman) ($(awk "BEGIN {print $sizesuf/$sizepre*100}")% of original size)"
+		echo -e "done! -> ${cgrn}${shortfile%.*}.webp ($sizesufhuman, $(awk "BEGIN {print $sizesuf/$sizepre*100}")% of original size)${cres}"
 
 		# Delete original
 		rm "$file"
 	else
-		echo 'failed! :('
 		# Print error and exit
-		echo -e "\033[0;31m$ERROR\033[0m"
+		echo -e "failed: ${cred}${ERROR/$directory\/}${cres}"
 		continue
 	fi
 done
