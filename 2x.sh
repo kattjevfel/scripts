@@ -1,39 +1,50 @@
 #!/bin/bash
 
-if [ $# -eq 0 ]; then
-    echo "Usage: ${0##*/} /path/to/files"
+# Needs to be exactly 2 arguments, and they must be directories
+if [ ! $# -eq 2 ] || [ ! -d "$1" ] || [ ! -d "$2" ]; then
+    echo "Usage: ${0##*/} input_dir output_dir"
     exit
 fi
 
-# Input directory
-in=/mnt/jupiter/Temp/2x_waiting
-# Output directory
-out=/mnt/jupiter/Temp/2x_done
-# Log file
-log=$(mktemp)
+# You can set these permanently and remove the above section
+input_dir=${1%/}
+output_dir=${2%/}
 
 # Check if there's any files to process
-if [ "$(find $in -empty)" ]; then
+filesfound=$(find "$input_dir" -type f)
+if [ -z "$filesfound" ]; then
     echo 'No files to process, exiting!'
     exit
 fi
 
-cleanup() {
-    # Get all processed files' sources and delete them
-    grep ' done' "$log" | awk '{print $1}' | xargs rm
+while IFS= read -r fullfilepath; do
+    # Path but without $input_dir
+    shortfilepath="${fullfilepath#*$input_dir}"
 
-    find "$in"/* -empty -delete 2>/dev/null
-}
+    # Create directory (remove everything after /)
+    mkdir -p "$output_dir/${shortfilepath%/*}"
 
-trap cleanup EXIT
+    # Print current file being upscaled, without leading /
+    echo -n "Upscaling ${shortfilepath#*/} "
 
-waifu2x-ncnn-vulkan \
-    -v \
-    -x \
-    -f webp \
-    -i $in \
-    -o $out 2>&1 |
-    tee "$log"
+    # Verbose, TTA, webp format
+    fulloutput=$(
+        waifu2x-ncnn-vulkan -v -x -f webp \
+            -i "${input_dir}${shortfilepath}" \
+            -o "${output_dir}${shortfilepath%.*}".webp 2>&1
+    )
 
-# If there are any errors we want to see them
-grep failed "$log"
+    if echo "$fulloutput" | grep -q "done"; then
+        echo "done!"
+        rm "${input_dir}${shortfilepath}"
+    else
+        echo -n 'failed: '
+        # Print error in red and move on
+        ERROR=$(echo "$fulloutput" | grep -v -e '^\[' -e 'Experimental compiler')
+        echo -e "\033[0;31m$ERROR\033[0m"
+        continue
+    fi
+done <<<"$filesfound"
+
+# Remove any empty directories left behind
+find "$input_dir" -mindepth 1 -type d -empty -delete

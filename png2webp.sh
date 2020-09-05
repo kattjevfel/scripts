@@ -24,7 +24,7 @@ for file in "$@"; do
 	sizeprehuman=$(numfmt --to=iec-i --suffix=B --format='%.1f' "$sizepre" 2>/dev/null)
 
 	# Print current file (with path) being processed + size in human readable
-	echo -ne "Converting $file ($sizeprehuman)... "
+	echo -n "Converting $file ($sizeprehuman)... "
 
 	# Bash can be a nightmare at times, this is how you do STDERR redirects.
 	# ..Moving on, check how the conversion went
