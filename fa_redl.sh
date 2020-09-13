@@ -20,7 +20,7 @@ wget --no-verbose --show-progress --input-file  /dev/fd/3 3<<<"$(
             id="${filename%%.*}"
 
             # Let's try both jpg and png because we don't know which one it is.
-            echo "https://d.facdn.net/art/$artist/$id/$filename.jpg"
-            echo "https://d.facdn.net/art/$artist/$id/$filename.png"
+            echo "https://d2.facdn.net/art/$artist/$id/$filename.jpg"
+            echo "https://d2.facdn.net/art/$artist/$id/$filename.png"
         done
 )"
