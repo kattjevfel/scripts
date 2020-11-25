@@ -12,7 +12,7 @@ shorturl=false
 
 #       >>> Requirements <<<
 
-# - Spectacle
+# - scrot
 # - curl
 # - imagemagick
 # - xclip
@@ -21,7 +21,7 @@ shorturl=false
 #       >>> The fun begins! <<<
 
 # Dependency checking
-for deps in spectacle curl convert xclip; do
+for deps in scrot curl convert xclip; do
     if [ ! "$(command -v $deps)" ]; then
         echo "$deps missing!"
         exit
@@ -56,8 +56,8 @@ uploader() {
             echo "$output"
             exit
         fi
-        echo "Link: $(echo "$output" | grep -Po '"link":*"\K[^"]*')"
         echo "Deletion URL: $(echo "$output" | grep -Po '"deleteionURL":*"\K[^"]*')"
+        echo "Link: $(echo "$output" | grep -Po '"link":*"\K[^"]*')"
     done
 }
 
@@ -69,33 +69,30 @@ list() {
 }
 
 screenshotter() {
+    # The file needs to go *somewhere* before processing
+    tempfile=$(mktemp --dry-run --quiet)
+
+    # Take the screenshot and load into clipboard (or exit if none was taken)
+    scrot "$@" --quality 100 --silent --pointer "${tempfile}.png" -e 'xclip -selection clipboard -t image/png $f' | exit
+
+    # If taking a window screenshot, prefix it with the process name
+    [ "$1" = "--focused" ] && currentwindow="$(</proc/"$(xdotool getactivewindow getwindowpid)"/comm)_"
+
     # Create directory if it doesn't exist
     [ ! -d "$savedir" ] && mkdir -p "$savedir"
 
-    # The file needs to go *somewhere* before processing
-    tempfile=$(mktemp)
-
-    # If taking a window screenshot, prefix it with the process name
-    [ "$1" = "--activewindow" ] && currentwindow="$(</proc/"$(xdotool getactivewindow getwindowpid)"/comm)_"
-
-    # Take the screenshot
-    spectacle "$1" -bno "$tempfile"
-
-    # Exit if file is empty (no screenshot taken)
-    [ ! -s "$tempfile" ] && exit
-
-    # Load picture into clipboard
-    xclip -selection clipboard -t image/png "$tempfile"
+    # WebP 4 lyfe
+    mogrify -define webp:lossless=true -format webp "${tempfile}.png" && rm "${tempfile}.png"
 
     # Check filesize and convert if too big
-    filesize=$(stat -c%s "$tempfile")
+    filesize=$(stat -c%s "${tempfile}.webp")
     if (("$filesize" > "$maxsize")); then
-        screenshot="$savedir/$currentwindow$filename.jpg"
-        convert -format jpg "$tempfile" "$screenshot"
-        rm "$tempfile"
+        screenshot="${savedir}/${currentwindow}${filename}.jpg"
+        mogrify -format jpg "${tempfile}" "${screenshot}"
+        rm "${tempfile}.webp"
     else
-        screenshot="$savedir/$currentwindow$filename.png"
-        mv "$tempfile" "$screenshot"
+        screenshot="${savedir}/${currentwindow}${filename}.webp"
+        mv "${tempfile}.webp" "$screenshot"
     fi
 
     # Upload file and add to clipboard
@@ -108,9 +105,9 @@ screenshotter() {
 
 while getopts awful options; do
     case $options in
-    a) screenshotter --region ;;
-    w) screenshotter --activewindow ;;
-    f) screenshotter --fullscreen ;;
+    a) screenshotter --select --freeze --stack ;;
+    w) screenshotter --focused --border --stack ;;
+    f) screenshotter ;;
     u) uploader "${@:2}" ;;
     l) list "$2" ;;
     *) help ;;
