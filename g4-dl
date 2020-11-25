@@ -14,6 +14,27 @@ Arguments:
     exit
 }
 
+download() {
+    # Get header for processing
+    head=$(curl --silent --cookie "$cookie" --head "https://aryion.com/g4/data.php?id=$1")
+
+    # Download with wget because it has pretty output
+    wget --load-cookies "$cookie" --content-disposition --quiet --show-progress --no-clobber "https://aryion.com/g4/data.php?id=$1"
+
+    # Fix malformed datestamp + get filename (grep string inside quotes and delete \015)
+    touch -d "$(
+        grep last-modified <<<"$head" |
+            sed 's/^last-modified: //g' |
+            tr -d : |
+            sed 's/./&:/19;s/./&:/22' |
+            tr -d '\015'
+    )" "$(
+        grep filename <<<"$head" |
+            grep -oP '"\K[^"\047]+(?=["\047])' |
+            tr -d '\015'
+    )"
+}
+
 # Options via arguments
 while getopts fph options; do
     case $options in
@@ -25,21 +46,6 @@ done
 
 # Display help if no mode is set
 [ $# -eq 0 ] && help
-
-# Correct corrupted modified date and download
-download() {
-    # Get header
-    head=$(wget --load-cookies="$cookie" --quiet --server-response --spider "https://aryion.com/g4/data.php?id=$1" 2>&1)
-
-    # Extract filename
-    filename=$(grep filename <<<"$head" | grep -oP '"\K[^"\047]+(?=["\047])' | tr -d '\015')
-
-    # .. and datestamp
-    lastmodified=$(grep Last-modified <<<"$head" | sed 's/  Last-modified: //g' | tr -d : | sed 's/./&:/19;s/./&:/22' | tr -d '\015')
-
-    wget --load-cookies "$cookie" --content-disposition --quiet --show-progress --no-clobber "https://aryion.com/g4/data.php?id=$1"
-    touch -d "$lastmodified" "$filename"
-}
 
 # Check what mode has been selected
 if [ "$mode" = post ]; then
@@ -74,5 +80,4 @@ elif [ "$mode" = full ]; then
         done
 else
     help
-    exit
 fi
