@@ -14,7 +14,30 @@ cleanup() {
 
 trap cleanup EXIT
 
+pagedownloader() {
+    echo -n "Downloading page $1.. "
+    wget -qO "$1.tmp" "$baseurl/stories/view?id=$storyid&rowStart=$1"
+
+    # Don't even get me started on how much I hate this, but fuck XML everything it brought.
+    grep subheading -A 2 "$1.tmp" | sed \
+        -e 's/&amp;/\&/g' \
+        -e 's/&lt;/\</g' \
+        -e 's/&gt;/\>/g' \
+        -e 's/&quot;/\"/g' \
+        -e "s/&apos;/\'/g" \
+        -e "s/<h2 class='subheading'>//g" \
+        -e 's/<\/h2>//g' \
+        -e "s/<div class='center margin-bottom-large'><\/div>//g" \
+        -e 's/<br>/\
+/g' \
+        >"$1.txt"
+
+    echo "done!"
+    rm "$1.tmp"
+}
+
 for storyid in "$@"; do
+(
     # Get main page
     wget -qO "$tmpfile" "$baseurl/stories/view?id=$storyid"
 
@@ -23,31 +46,33 @@ for storyid in "$@"; do
 
     # If we're not in a dir called the submissions title, create and enter it.
     if [ ! "${PWD##*/}" = "$title" ]; then
-        mkdir -vp "$title"
-        cd "$title" || { echo "Can't enter $title"; continue; }
+        mkdir -vp "$title ($storyid)"
+        cd "$title ($storyid)" || {
+            echo "Can't enter \"$title ($storyid)\", skipping."
+            continue
+        }
     fi
 
     # Get cover image
-    echo 'Downloading cover image...'
-    wget -q --show-progress -nc "$(
-        grep -m 1 "Upload/Story/Cover" "$tmpfile" |
+    echo "Downloading cover image... ($title)"
+    wget -q -nc "$(
+        grep --max-count=1 "Upload/Story/Cover" "$tmpfile" |
             # Get string inside single quotes
             grep -oP "/.+.[a-z]+" |
             awk -v var="$baseurl" '{print var $0;}'
     )"
 
     # Get total pages
-    pages="$(grep -m 1 -o "page 1 of [[:digit:]]*" "$tmpfile" | awk 'NF>1{print $NF}')"
-    echo "There are $pages pages!"
+    pages="$(grep -o "[[:digit:]]*' title=''><span class='ff-icon-material'>" "$tmpfile" | sed 's/[^0-9]//g')"
 
     # Count from 0 to however many pages there are
-    for ((page = 0; page <= ((pages - 1)); page++)); do
-        if [ -f "$page.html" ]; then
-            echo "Page $page already downloaded, skipping..."
+    for ((page = 0; page <= pages; page++)); do
+        # Don't re-download old pages
+        if [ -f "$page.txt" ]; then
+            echo "Page $page already downloaded, skipping."
             continue
         fi
-        wget -q --show-progress -O "$page.tmp" "$baseurl/stories/view?id=$storyid&rowStart=$page"
-        grep subheading -A 1 "$page.tmp" >"$page.html"
-        rm "$page.tmp"
-    done
+
+        pagedownloader "$page"
+    done)
 done
