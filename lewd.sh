@@ -12,7 +12,7 @@ shorturl=false
 
 #       >>> Requirements <<<
 
-# - scrot
+# - Spectacle
 # - curl
 # - imagemagick
 # - xclip
@@ -20,15 +20,6 @@ shorturl=false
 
 #       >>> The fun begins! <<<
 
-# Dependency checking
-for deps in scrot curl convert xclip; do
-    if [ ! "$(command -v $deps)" ]; then
-        echo "$deps missing!"
-        exit
-    fi
-done
-
-# pls send help
 help() {
     echo 'Usage:
 
@@ -41,58 +32,49 @@ help() {
     exit
 }
 
-# Display help if no argument passed
-[ $# -eq 0 ] && help
-
 uploader() {
     for file in "$@"; do
         output=$(curl --request POST \
             --form "file=@$file" \
             --header "shortUrl: $shorturl" \
             --header "token: $LEWD_TOKEN" \
+            --progress-bar \
             https://lewd.se/upload)
         # If upload isn't successful, tell user
         if ! echo "$output" | grep -q 'status":200'; then
             echo "$output"
-            exit
+            exit 1
         fi
         echo "Deletion URL: $(echo "$output" | grep -Po '"deleteionURL":*"\K[^"]*')"
         echo "Link: $(echo "$output" | grep -Po '"link":*"\K[^"]*')"
     done
 }
 
-list() {
-    # Allow non-POSIX text files
-    while IFS= read -r line || [[ -n "$line" ]]; do
-        uploader "$line"
-    done <"$2"
-}
-
 screenshotter() {
     # The file needs to go *somewhere* before processing
-    tempfile=$(mktemp --dry-run --quiet)
+    tempfile=$(mktemp --dry-run --quiet --suffix=.png)
 
-    # Take the screenshot and load into clipboard (or exit if none was taken)
-    scrot "$@" --quality 100 --silent --pointer "${tempfile}.png" -e 'xclip -selection clipboard -t image/png $f' | exit
+    # Take the screenshot and load into clipboard
+    spectacle "$@" --background --nonotify --clipboard --output "${tempfile}"
+
+    # Exit if file is empty (no screenshot taken)
+    [ ! -f "$tempfile" ] && exit
 
     # If taking a window screenshot, prefix it with the process name
-    [ "$1" = "--focused" ] && currentwindow="$(</proc/"$(xdotool getactivewindow getwindowpid)"/comm)_"
+    [ "$1" = "--activewindow" ] && currentwindow="$(</proc/"$(xdotool getactivewindow getwindowpid)"/comm)_"
 
     # Create directory if it doesn't exist
     [ ! -d "$savedir" ] && mkdir -p "$savedir"
 
-    # WebP 4 lyfe
-    mogrify -define webp:lossless=true -format webp "${tempfile}.png" && rm "${tempfile}.png"
-
     # Check filesize and convert if too big
-    filesize=$(stat -c%s "${tempfile}.webp")
+    filesize=$(stat -c%s "${tempfile}")
     if (("$filesize" > "$maxsize")); then
         screenshot="${savedir}/${currentwindow}${filename}.jpg"
-        mogrify -format jpg "${tempfile}" "${screenshot}"
-        rm "${tempfile}.webp"
+        convert -format jpg "${tempfile}" "${screenshot}"
+        rm "${tempfile}"
     else
-        screenshot="${savedir}/${currentwindow}${filename}.webp"
-        mv "${tempfile}.webp" "$screenshot"
+        screenshot="${savedir}/${currentwindow}${filename}.png"
+        mv "${tempfile}" "$screenshot"
     fi
 
     # Upload file and add to clipboard
@@ -105,11 +87,14 @@ screenshotter() {
 
 while getopts awful options; do
     case $options in
-    a) screenshotter --select --freeze --stack ;;
-    w) screenshotter --focused --border --stack ;;
-    f) screenshotter ;;
+    a) screenshotter --region ;;
+    w) screenshotter --activewindow ;;
+    f) screenshotter --fullscreen ;;
     u) uploader "${@:2}" ;;
-    l) list "$2" ;;
+    l) while IFS=$'\n' read -r line; do uploader "$line"; done <"$2" ;;
     *) help ;;
     esac
 done
+
+# Display help if no argument passed
+[ $# -eq 0 ] && help
