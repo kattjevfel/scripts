@@ -54,8 +54,16 @@ screenshotter() {
     # The file needs to go *somewhere* before processing
     tempfile=$(mktemp --dry-run --quiet --suffix=.png)
 
+    # Check spectacle version for changed clipboard command
+    spectaclever="$(spectacle -v | awk '{print $2}')"
+    if (( $(echo "$spectaclever" "21.07.70" | awk '{print ($1 < $2)}') )); then
+        cliparg="--clipboard"
+    else
+        cliparg="--copy-image"
+    fi
+
     # Take the screenshot and load into clipboard
-    spectacle "$@" --background --nonotify --clipboard --output "${tempfile}"
+    spectacle "$@" --background --nonotify $cliparg --output "${tempfile}"
 
     # Exit if file is empty (no screenshot taken)
     [ ! -f "$tempfile" ] && exit
