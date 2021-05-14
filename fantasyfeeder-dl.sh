@@ -19,14 +19,14 @@ pagedownloader() {
     wget -qO "$1.tmp" "$baseurl/stories/view?id=$storyid&rowStart=$1"
 
     # Don't even get me started on how much I hate this, but fuck XML everything it brought.
-    grep subheading -A 2 "$1.tmp" | sed \
+    grep "<h3>" -A 2 -m 1 "$1.tmp" | sed \
         -e 's/&amp;/\&/g' \
         -e 's/&lt;/\</g' \
         -e 's/&gt;/\>/g' \
         -e 's/&quot;/\"/g' \
         -e "s/&apos;/\'/g" \
-        -e "s/<h2 class='subheading'>//g" \
-        -e 's/<\/h2>//g' \
+        -e "s/<h3>//g" \
+        -e 's/<\/h3>//g' \
         -e "s/<div class='center margin-bottom-large'><\/div>//g" \
         -e 's/<br>/\
 /g' \
@@ -42,7 +42,7 @@ for storyid in "$@"; do
     wget -qO "$tmpfile" "$baseurl/stories/view?id=$storyid"
 
     # Get title
-    title="$(grep -oP "(?<=<h1 class='title'>).*?(?=</h1>)" "$tmpfile")"
+    title="$(grep -oP "(?<=<h\d class='title'>).*?(?=</h\d>)" "$tmpfile")"
 
     # If we're not in a dir called the submissions title, create and enter it.
     if [ ! "${PWD##*/}" = "$title" ]; then
@@ -63,7 +63,7 @@ for storyid in "$@"; do
     )"
 
     # Get total pages
-    pages="$(grep -o "[[:digit:]]*' title=''><span class='ff-icon-material'>" "$tmpfile" | sed 's/[^0-9]//g')"
+    pages="$(grep -o "rowStart=[[:digit:]]*" "$tmpfile" | tail -1 | sed 's/[^0-9]//g')"
 
     # Count from 0 to however many pages there are
     for ((page = 0; page <= pages; page++)); do
