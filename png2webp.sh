@@ -43,7 +43,7 @@ for file in "$@"; do
 	# Print current file (with path) being processed + size in human readable
 	echo -n "Converting $file ($sizeprehuman)... "
 
-	if ERROR=$({ mogrify -define webp:lossless=true -format webp "$file"; } 2>&1); then
+	if ERROR=$({ img2webp -lossless "$file" -o "$basename.webp"; } 2>&1); then
 		# Filesize after converting in bytes & human readable
 		sizesuf="$(stat -c '%s' "$basename".webp)"
 		sizesufhuman=$(numfmt --to=iec-i --suffix=B --format='%.1f' "$sizesuf")
