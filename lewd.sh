@@ -15,8 +15,8 @@ shorturl=false
 # - Spectacle
 # - curl
 # - imagemagick
-# - xclip
-# - xdotool (opt. for getting windows' process name)
+# - xclip / wl-clipboard
+# - xdotool (opt. for getting windows' process name) (xorg only)
 
 #       >>> The fun begins! <<<
 
@@ -68,8 +68,12 @@ screenshotter() {
     # Exit if file is empty (no screenshot taken)
     [ ! -f "$tempfile" ] && exit
 
-    # If taking a window screenshot, prefix it with the process name
-    [ "$1" = "--activewindow" ] && currentwindow="$(</proc/"$(xdotool getactivewindow getwindowpid)"/comm)_"
+    # If taking a window screenshot, prefix it with the process name (only works on xorg)
+    if [ "$1" = "-activewindow" ]; then
+        if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
+            currentwindow="$(</proc/"$(xdotool getactivewindow getwindowpid)"/comm)_"
+        fi
+    fi
 
     # Create directory if it doesn't exist
     [ ! -d "$savedir" ] && mkdir -p "$savedir"
@@ -85,9 +89,16 @@ screenshotter() {
         mv "${tempfile}" "$screenshot"
     fi
 
-    # Upload file and add to clipboard
+    # Upload file
     uploader "$screenshot"
-    echo "$output" | grep -Po '"link":*"\K[^"]*' | xclip -selection clipboard -rmlastnl
+
+    # Add to clipboard
+    if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
+        clipboard_command="wl-copy --trim-newline"
+    else
+        clipboard_command="xclip -selection clipboard -rmlastnl"
+    fi
+    echo "$output" | grep -Po '"link":*"\K[^"]*' | $clipboard_command
 
     # Send out desktop notifcation
     notify-send --urgency=low --expire-time=2000 --category=transfer.complete --icon "$icon" "$filename uploaded!"
