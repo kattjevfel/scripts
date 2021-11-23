@@ -69,8 +69,8 @@ screenshotter() {
     [ ! -f "$tempfile" ] && exit
 
     # If taking a window screenshot, prefix it with the process name (only works on xorg)
-    if [ "$1" = "-activewindow" ]; then
-        if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
+    if [ "$1" = "--activewindow" ]; then
+        if ! [ "$XDG_SESSION_TYPE" = "wayland" ]; then
             currentwindow="$(</proc/"$(xdotool getactivewindow getwindowpid)"/comm)_"
         fi
     fi
