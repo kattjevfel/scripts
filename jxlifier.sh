@@ -23,9 +23,11 @@ for file in "$@"; do
 	directory=${file%/*}
 	# fuck basename
 	basename=${file%.*}
+	# mime-type
+	mimetype="$(file -b --mime-type "$file")"
 
-	# Make sure file exists and is not a spy
-	if ! [[ -f $file ]] || ! [ "$(file -b --mime-type "$file" | cut -d/ -f1)" = image ]; then
+	# Make sure file exists and is a picture
+	if ! [[ -f $file ]] || ! [ "$(echo "$mimetype" | cut -d/ -f1)" = image ]; then
 		echoerr "$shortfile is not a valid image!"
 		continue
 	fi
@@ -49,7 +51,15 @@ for file in "$@"; do
 	# Print current file (with path) being processed + size in human readable
 	echo -n "Converting $file ($sizeprehuman)... "
 
-	if ERROR=$({ mogrify -format jxl -define jxl:effort=9 "$file"; } 2>&1); then
+	# Command to perform conversion
+	# We are using cjxl to convert jpegs as to preserve the exif data
+	if [ "$mimetype" = "image/jpeg" ]; then
+		convert_command=(cjxl -e 9 "$file" "$basename".jxl)
+	else
+		convert_command=(mogrify -format jxl -define jxl:effort=9 "$file")
+	fi
+
+	if ERROR=$({ "${convert_command[@]}"; } 2>&1); then
 		# Filesize after converting in bytes & human readable
 		sizesuf="$(stat -c '%s' "$basename".jxl)"
 		sizesufhuman=$(numfmt --to=iec-i --suffix=B --format='%.1f' "$sizesuf")
