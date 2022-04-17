@@ -52,8 +52,8 @@ for file in "$@"; do
 	echo -n "Converting $file ($sizeprehuman)... "
 
 	# Command to perform conversion
-	# We are using cjxl to convert jpegs as to preserve the exif data
-	if [ "$mimetype" = "image/jpeg" ]; then
+	# Use cjxl for all its supported formats, mogrify for anything else
+	if [ "$mimetype" = "image/png" ] || [ "$mimetype" = "image/apng" ] || [ "$mimetype" = "image/gif" ] || [ "$mimetype" = "image/jpeg" ] || [ "$mimetype" = "image/x-exr" ] || [ "$mimetype" = "image/x-portable-bitmap" ] || [ "$mimetype" = "image/x-portable-graymap" ] || [ "$mimetype" = "image/x-portable-pixmap" ] || [ "$mimetype" = "image/x-portable-anymap" ]; then
 		convert_command=(cjxl -e 9 "$file" "$basename".jxl)
 	else
 		convert_command=(mogrify -format jxl -define jxl:effort=9 "$file")
