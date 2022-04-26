@@ -2,7 +2,7 @@
 IFS=$'\n'
 
 if [ $# -eq 0 ]; then
-	echo 'I feast on pngs and you'\''ve left me hungry!'
+	echo 'I feast on images and you'\''ve left me hungry!'
 	exit
 fi
 
@@ -23,10 +23,12 @@ for file in "$@"; do
 	directory=${file%/*}
 	# fuck basename
 	basename=${file%.*}
+	# mime-type
+	mimetype="$(file -b --mime-type "$file")"
 
-	# Make sure file exists and is not a spy
-	if ! [[ -f $file ]] || ! [ "$(file -b --extension "$file")" = png ]; then
-		echoerr "$shortfile is not a valid PNG!"
+	# Make sure file exists and is a picture
+	if ! [[ -f $file ]] || ! [ "$(echo "$mimetype" | cut -d/ -f1)" = image ]; then
+		echoerr "$shortfile is not a valid image!"
 		continue
 	fi
 
@@ -43,7 +45,15 @@ for file in "$@"; do
 	# Print current file (with path) being processed + size in human readable
 	echo -n "Converting $file ($sizeprehuman)... "
 
-	if ERROR=$({ img2webp -lossless "$file" -o "$basename.webp"; } 2>&1); then
+	# Command to perform conversion
+	# Use img2webp for all its supported formats, mogrify for anything else
+	if [ "$mimetype" = "image/png" ] || [ "$mimetype" = "image/jpeg" ] || [ "$mimetype" = "image/tiff" ]; then
+		convert_command=(img2webp -lossless "$file" -o "$basename.webp")
+	else
+		convert_command=(mogrify -define webp:lossless=true -format webp "$file")
+	fi
+
+	if ERROR=$({ "${convert_command[@]}"; } 2>&1); then
 		# Filesize after converting in bytes & human readable
 		sizesuf="$(stat -c '%s' "$basename".webp)"
 		sizesufhuman=$(numfmt --to=iec-i --suffix=B --format='%.1f' "$sizesuf")
