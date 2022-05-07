@@ -1,11 +1,11 @@
 #!/bin/sh
-# Get latest version of Wynntils and launch the Wynncraft profile
+# Get latest version of Wynntils and launch the WynnCraft profile
 
 channel=Wynntils-DEV
-modspath=$HOME/.local/share/multimc/instances/Wynncraft/.minecraft/mods
+modspath=$HOME/.local/share/polymc/instances/WynnCraft/.minecraft/mods
 
 latest="$(curl -s https://ci.wynntils.com/job/$channel/lastSuccessfulBuild/api/json)"
-local="$(find "$modspath" -name 'Wynntils*.jar' -printf '%f')"
+local="$(find "$modspath" -iname 'wynntils*.jar' -printf '%f')"
 remote="$(echo "$latest" | grep -Po '"fileName": *"\K[^"]*')"
 
 if [ "$local" = "$remote" ]; then
@@ -23,4 +23,4 @@ fi
 echo 'Changes (latest build only):'
 echo "$latest" | grep -Po '"msg": *"\K[^"]*'
 
-multimc --launch Wynncraft &
+polymc --launch WynnCraft &
