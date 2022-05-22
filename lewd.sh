@@ -45,7 +45,7 @@ uploader() {
             echo "$output"
             exit 1
         fi
-        echo "Deletion URL: $(echo "$output" | grep -Po '"deleteionURL":*"\K[^"]*')"
+        echo "Deletion URL: $(echo "$output" | grep -Po '"deletionUrl":*"\K[^"]*')"
         echo "Link: $(echo "$output" | grep -Po '"link":*"\K[^"]*')"
     done
 }
