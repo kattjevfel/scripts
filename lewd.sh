@@ -28,8 +28,17 @@ help() {
 -f  full screenshot
 
 -u  upload file(s)
--l  upload list of files (one file per line)'
+-l  upload list of files (one file per line)
+-s  toggle short URL (must be first command)'
     exit
+}
+
+shorturlflipper() {
+    if [ $shorturl = "false" ]; then
+        shorturl=true
+    elif [ $shorturl = "true" ]; then
+        shorturl=false
+    fi
 }
 
 uploader() {
@@ -104,13 +113,14 @@ screenshotter() {
     notify-send --urgency=low --expire-time=2000 --category=transfer.complete --icon "$icon" "$filename uploaded!"
 }
 
-while getopts awful options; do
+while getopts awfuls options; do
     case $options in
     a) screenshotter --region ;;
     w) screenshotter --activewindow ;;
     f) screenshotter --fullscreen ;;
     u) uploader "${@:2}" ;;
     l) while IFS=$'\n' read -r line; do uploader "$line"; done <"$2" ;;
+    s) shorturlflipper ;;
     *) help ;;
     esac
 done
