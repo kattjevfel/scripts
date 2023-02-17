@@ -29,7 +29,8 @@ help() {
 
 -u  upload file(s)
 -l  upload list of files (one file per line)
--s  toggle short URL (must be first command)'
+-s  toggle short URL (must be first command)
+-r  re-upload URL to lewd.se'
     exit
 }
 
@@ -39,6 +40,28 @@ shorturlflipper() {
     elif [ $shorturl = "true" ]; then
         shorturl=false
     fi
+}
+
+reupload() {
+    # Gotta store that shit somewhere
+    tempfile=$(mktemp --dry-run --quiet)
+
+    # Download file
+    curl --silent --location --fail --output "$tempfile" "$1"
+
+    # Check filetype and grab only first example `file` spits out
+    fileext=$(file --extension --brief "$tempfile")
+    fileext=${fileext%%/*}
+
+    # Move file to have (hopefully) proper extension
+    tempfilewithext=$(mktemp --dry-run --quiet --suffix=."$fileext")
+    mv "$tempfile" "$tempfilewithext"
+
+    # Force short url as we're not saving OG filename, upload file
+    shorturl=true uploader "$tempfilewithext"
+
+    # Remove temporary file
+    rm "$tempfilewithext"
 }
 
 uploader() {
@@ -113,7 +136,7 @@ screenshotter() {
     notify-send --urgency=low --expire-time=2000 --category=transfer.complete --icon "$icon" "$filename uploaded!"
 }
 
-while getopts awfuls options; do
+while getopts awfulsr options; do
     case $options in
     a) screenshotter --region ;;
     w) screenshotter --activewindow ;;
@@ -121,6 +144,7 @@ while getopts awfuls options; do
     u) uploader "${@:2}" ;;
     l) while IFS=$'\n' read -r line; do uploader "$line"; done <"$2" ;;
     s) shorturlflipper ;;
+    r) reupload "${@:2}" ;;
     *) help ;;
     esac
 done
