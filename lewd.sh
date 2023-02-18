@@ -10,9 +10,12 @@ maxsize=1048576 # Max filesize before going with jpg (in bytes)
 icon="$HOME/Pictures/lewd.svg"
 shorturl=false
 
+# Available options are: spectacle,scrot
+screenshot_tool="spectacle"
+
 #       >>> Requirements <<<
 
-# - Spectacle
+# - Spectacle/scrot
 # - curl
 # - imagemagick
 # - xclip / wl-clipboard
@@ -53,9 +56,15 @@ reupload() {
     fileext=$(file --extension --brief "$tempfile")
     fileext=${fileext%%/*}
 
-    # Move file to have (hopefully) proper extension
-    tempfilewithext=$(mktemp --dry-run --quiet --suffix=."$fileext")
-    mv "$tempfile" "$tempfilewithext"
+    # Skip adding extension if `file` can't figure it out
+    if [ "$fileext" = "???" ]; then
+        unset fileext
+        tempfilewithext=$tempfile
+    else
+        # Move file to have (hopefully) proper extension
+        tempfilewithext=$(mktemp --dry-run --quiet --suffix=."$fileext")
+        mv "$tempfile" "$tempfilewithext"
+    fi
 
     # Force short url as we're not saving OG filename, upload file
     shorturl=true uploader "$tempfilewithext"
