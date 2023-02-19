@@ -91,20 +91,37 @@ uploader() {
     done
 }
 
-screenshotter() {
-    # The file needs to go *somewhere* before processing
-    tempfile=$(mktemp --dry-run --quiet --suffix=.png)
+screenshotter() (
+    # Pick screenshoot tool
+    if [ "$screenshot_tool" = "spectacle" ]; then
+        # The file needs to go *somewhere* before processing
+        tempfile=$(mktemp --dry-run --quiet --suffix=.png)
+        
+        # Check spectacle version for changed clipboard command
+        spectaclever="$(spectacle -v | awk '{print $2}')"
+        if (( $(echo "$spectaclever" "21.07.70" | awk '{print ($1 < $2)}') )); then
+            cliparg="--clipboard"
+        else
+            cliparg="--copy-image"
+        fi
 
-    # Check spectacle version for changed clipboard command
-    spectaclever="$(spectacle -v | awk '{print $2}')"
-    if (( $(echo "$spectaclever" "21.07.70" | awk '{print ($1 < $2)}') )); then
-        cliparg="--clipboard"
+        screenshot_base_command() {
+            spectacle "${@}" --background --nonotify $cliparg --output ${tempfile}
+        }
+        
+        if [ "$1" = fullscreen ]; then
+            screenshot_base_command --fullscreen
+        elif [ "$1" = activewindow ]; then
+            screenshot_base_command --activewindow
+        elif [ "$1" = region ]; then
+            screenshot_base_command --region
+        fi
+    elif [ "$screenshot_tool" = "scrot" ]; then
+        echo "Upcoming!"
     else
-        cliparg="--copy-image"
+        echo "Invalid screenshot tool selected!"
+        exit 1
     fi
-
-    # Take the screenshot and load into clipboard
-    spectacle "$@" --background --nonotify $cliparg --output "${tempfile}"
 
     # Exit if file is empty (no screenshot taken)
     [ ! -f "$tempfile" ] && exit
@@ -143,13 +160,13 @@ screenshotter() {
 
     # Send out desktop notifcation
     notify-send --urgency=low --expire-time=2000 --category=transfer.complete --icon "$icon" "$filename uploaded!"
-}
+)
 
 while getopts awfulsr options; do
     case $options in
-    a) screenshotter --region ;;
-    w) screenshotter --activewindow ;;
-    f) screenshotter --fullscreen ;;
+    a) screenshotter region ;;
+    w) screenshotter activewindow ;;
+    f) screenshotter fullscreen ;;
     u) uploader "${@:2}" ;;
     l) while IFS=$'\n' read -r line; do uploader "$line"; done <"$2" ;;
     s) shorturlflipper ;;
