@@ -92,11 +92,11 @@ uploader() {
 }
 
 screenshotter() (
+    # The file needs to go *somewhere* before processing
+    tempfile=$(mktemp --dry-run --quiet --suffix=.png)
+
     # Pick screenshoot tool
     if [ "$screenshot_tool" = "spectacle" ]; then
-        # The file needs to go *somewhere* before processing
-        tempfile=$(mktemp --dry-run --quiet --suffix=.png)
-        
         # Check spectacle version for changed clipboard command
         spectaclever="$(spectacle -v | awk '{print $2}')"
         if (( $(echo "$spectaclever" "21.07.70" | awk '{print ($1 < $2)}') )); then
@@ -106,7 +106,7 @@ screenshotter() (
         fi
 
         screenshot_base_command() {
-            spectacle "${@}" --background --nonotify $cliparg --output ${tempfile}
+            spectacle "$@" --background --nonotify $cliparg --output ${tempfile}
         }
         
         if [ "$1" = fullscreen ]; then
@@ -117,7 +117,17 @@ screenshotter() (
             screenshot_base_command --region
         fi
     elif [ "$screenshot_tool" = "scrot" ]; then
-        echo "Upcoming!"
+        screenshot_base_command() {
+            scrot "$@" --quality 100 --silent --pointer "${tempfile}" -e 'xclip -selection clipboard -t image/png $f'
+        }
+
+        if [ "$1" = fullscreen ]; then
+            screenshot_base_command
+        elif [ "$1" = activewindow ]; then
+            screenshot_base_command --focused --border --stack
+        elif [ "$1" = region ]; then
+            screenshot_base_command --select --freeze --stack
+        fi
     else
         echo "Invalid screenshot tool selected!"
         exit 1
