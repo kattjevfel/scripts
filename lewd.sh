@@ -10,8 +10,8 @@ maxsize=1048576 # Max filesize before going with jpg (in bytes)
 icon="$HOME/Pictures/lewd.svg"
 shorturl=false
 
-# Available options are: spectacle,scrot
-screenshot_tool="spectacle"
+# Available options are: spectacle,scrot,gnome-screenshot
+screenshot_tool="gnome-screenshot"
 
 #       >>> Requirements <<<
 
@@ -127,6 +127,18 @@ screenshotter() (
             screenshot_base_command --focused --border --stack
         elif [ "$1" = region ]; then
             screenshot_base_command --select --freeze --stack
+        fi
+    elif [ "$screenshot_tool" = "gnome-screenshot" ]; then
+        screenshot_base_command() {
+            gnome-screenshot "$@" --clipboard --include-pointer --file="${tempfile}"
+        }
+
+        if [ "$1" = fullscreen ]; then
+            screenshot_base_command
+        elif [ "$1" = activewindow ]; then
+            screenshot_base_command --window
+        elif [ "$1" = region ]; then
+            screenshot_base_command --area
         fi
     else
         echo "Invalid screenshot tool selected!"
