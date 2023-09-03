@@ -11,7 +11,7 @@ icon="$HOME/Pictures/lewd.svg"
 shorturl=false
 
 # Available options are: spectacle,scrot,gnome-screenshot
-screenshot_tool="gnome-screenshot"
+screenshot_tool="spectacle"
 
 #       >>> Requirements <<<
 
@@ -178,7 +178,8 @@ screenshotter() (
     else
         clipboard_command="xclip -selection clipboard -rmlastnl"
     fi
-    echo "$output" | grep -Po '"link":*"\K[^"]*' | $clipboard_command
+    # Thanks Oba- KDE! https://bugs.kde.org/show_bug.cgi?id=469238
+    echo "$output" | grep -Po '"link":*"\K[^"]*' | $clipboard_command > /dev/null
 
     # Send out desktop notifcation
     notify-send --urgency=low --expire-time=2000 --category=transfer.complete --icon "$icon" "$filename uploaded!"
