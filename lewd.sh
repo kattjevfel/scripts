@@ -4,7 +4,7 @@
 #       >>> Options <<<
 savedir="$HOME/Pictures/Screenshots"
 filename="$(date '+%Y-%m-%d_%H-%M-%S')"
-maxsize=1048576 # Max filesize before going with jpg (in bytes)
+maxsize=1048576 # Max filesize before going with lossy avif (in bytes)
 
 #LEWD_TOKEN='YOUR TOKEN GOES HERE (https://lewd.se/user)'
 icon="$HOME/Pictures/lewd.svg"
@@ -106,7 +106,7 @@ screenshotter() (
         fi
 
         screenshot_base_command() {
-            spectacle "$@" --background --nonotify $cliparg --output ${tempfile}
+            spectacle "$@" --background --nonotify $cliparg --output "${tempfile}"
         }
         
         if [ "$1" = fullscreen ]; then
@@ -161,8 +161,8 @@ screenshotter() (
     # Check filesize and convert if too big
     filesize=$(stat -c%s "${tempfile}")
     if (("$filesize" > "$maxsize")); then
-        screenshot="${savedir}/${currentwindow}${filename}.jpg"
-        convert -format jpg "${tempfile}" "${screenshot}"
+        screenshot="${savedir}/${currentwindow}${filename}.avif"
+        convert "${tempfile}" "${screenshot}"
         rm "${tempfile}"
     else
         screenshot="${savedir}/${currentwindow}${filename}.png"
