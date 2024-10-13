@@ -1,13 +1,13 @@
 #!/bin/bash
-# lewd.se screenshotter and file uploader
+# sakamoto.moe screenshotter and file uploader
 
 #       >>> Options <<<
 savedir="$HOME/Pictures/Screenshots"
 filename="$(date '+%Y-%m-%d_%H-%M-%S')"
 maxsize=1048576 # Max filesize before going with lossy avif (in bytes)
 
-#LEWD_TOKEN='YOUR TOKEN GOES HERE (https://lewd.se/user)'
-icon="$HOME/Pictures/lewd.svg"
+#SAKAMOTO_TOKEN='YOUR TOKEN GOES HERE (https://sakamoto.moe/user)'
+icon="$HOME/Pictures/sakamotomoe.webp"
 shorturl=false
 
 # Available options are: spectacle,scrot,gnome-screenshot
@@ -33,7 +33,7 @@ help() {
 -u  upload file(s)
 -l  upload list of files (one file per line)
 -s  toggle short URL (must be first command)
--r  re-upload URL to lewd.se'
+-r  re-upload URL to sakamoto.moe'
     exit
 }
 
@@ -78,9 +78,9 @@ uploader() {
         output=$(curl --request POST \
             --form "file=@$file" \
             --header "shortUrl: $shorturl" \
-            --header "token: $LEWD_TOKEN" \
+            --header "token: $SAKAMOTO_TOKEN" \
             --progress-bar \
-            https://lewd.se/upload)
+            https://sakamoto.moe/upload)
         # If upload isn't successful, tell user
         if ! echo "$output" | grep -q 'status":200'; then
             echo "$output"
