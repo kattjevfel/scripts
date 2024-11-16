@@ -16,7 +16,7 @@ elif [ "$1" = zip ] || [ "$1" = rar ] || [ "$1" = 7z ]; then
     $sevenzipprog x "$inputfile" -o"${inputfile%.*}" || exit 1
     rm "$inputfile"
     find "${inputfile%.*}" -iname "*.png" -exec webpifier.sh {} \;
-    find "${inputfile%.*}" -iname "*.jpg" -exec jpegoptim -p --workers=max --strip-com --strip-iptc --strip-icc --strip-xmp {} +
+    find "${inputfile%.*}" -iname "*.jpg" -exec jpegoptim -p --strip-com --strip-iptc --strip-icc --strip-xmp {} +
 else
     exit 0
 fi
