@@ -1,5 +1,5 @@
 #!/bin/zsh
-hasher=md5sum
+hasher=crc32
 
 # Fuckup protection
 if [ ! "${PWD##*/}" = "${hasher%sum}" ]; then
