@@ -1,13 +1,15 @@
 #!/bin/bash
+# shellcheck disable=SC2312
+
 # sakamoto.moe screenshotter and file uploader
 
 #       >>> Options <<<
-savedir="$HOME/Pictures/Screenshots"
+savedir="${HOME}/Pictures/Screenshots"
 filename="$(date '+%Y-%m-%d_%H-%M-%S')"
 maxsize=1048576 # Max filesize before going with lossy avif (in bytes)
 
 #SAKAMOTO_TOKEN='YOUR TOKEN GOES HERE (https://sakamoto.moe/user)'
-icon="$HOME/Pictures/sakamotomoe.webp"
+icon="${HOME}/Pictures/sakamotomoe.webp"
 shorturl=false
 
 # Available options are: spectacle,scrot,gnome-screenshot
@@ -38,9 +40,9 @@ help() {
 }
 
 shorturlflipper() {
-    if [ $shorturl = "false" ]; then
+    if [[ ${shorturl} = "false" ]]; then
         shorturl=true
-    elif [ $shorturl = "true" ]; then
+    elif [[ ${shorturl} = "true" ]]; then
         shorturl=false
     fi
 }
@@ -50,44 +52,45 @@ reupload() {
     tempfile=$(mktemp --dry-run --quiet)
 
     # Download file
-    curl --silent --location --fail --output "$tempfile" "$1"
+    curl --silent --location --fail --output "${tempfile}" "$1"
 
     # Check filetype and grab only first example `file` spits out
-    fileext=$(file --extension --brief "$tempfile")
+    fileext=$(file --extension --brief "${tempfile}")
     fileext=${fileext%%/*}
 
     # Skip adding extension if `file` can't figure it out
-    if [ "$fileext" = "???" ]; then
+    if [[ "${fileext}" = "???" ]]; then
         unset fileext
-        tempfilewithext=$tempfile
+        tempfilewithext=${tempfile}
     else
         # Move file to have (hopefully) proper extension
-        tempfilewithext=$(mktemp --dry-run --quiet --suffix=."$fileext")
-        mv "$tempfile" "$tempfilewithext"
+        tempfilewithext=$(mktemp --dry-run --quiet --suffix=."${fileext}")
+        mv "${tempfile}" "${tempfilewithext}"
     fi
 
     # Force short url as we're not saving OG filename, upload file
-    shorturl=true uploader "$tempfilewithext"
+    shorturl=true uploader "${tempfilewithext}"
 
     # Remove temporary file
-    rm "$tempfilewithext"
+    rm "${tempfilewithext}"
 }
 
+# shellcheck disable=SC2154 # SAKAMOTO_TOKEN gets set in the users env file
 uploader() {
     for file in "$@"; do
         output=$(curl --request POST \
-            --form "file=@$file" \
-            --header "shortUrl: $shorturl" \
-            --header "token: $SAKAMOTO_TOKEN" \
+            --form "file=@${file}" \
+            --header "shortUrl: ${shorturl}" \
+            --header "token: ${SAKAMOTO_TOKEN}" \
             --progress-bar \
             https://sakamoto.moe/upload)
         # If upload isn't successful, tell user
-        if ! echo "$output" | grep -q 'status":200'; then
-            echo "$output"
+        if ! echo "${output}" | grep -q 'status":200'; then
+            echo "${output}"
             exit 1
         fi
-        echo "Deletion URL: $(echo "$output" | grep -Po '"deletionUrl":*"\K[^"]*')"
-        echo "Link: $(echo "$output" | grep -Po '"link":*"\K[^"]*')"
+        echo "Deletion URL: $(echo "${output}" | grep -Po '"deletionUrl":*"\K[^"]*')"
+        echo "Link: $(echo "${output}" | grep -Po '"link":*"\K[^"]*')"
     done
 }
 
@@ -96,48 +99,49 @@ screenshotter() (
     tempfile=$(mktemp --dry-run --quiet --suffix=.png)
 
     # Pick screenshoot tool
-    if [ "$screenshot_tool" = "spectacle" ]; then
+    if [[ "${screenshot_tool}" = "spectacle" ]]; then
         # Check spectacle version for changed clipboard command
         spectaclever="$(spectacle -v | awk '{print $2}')"
-        if (( $(echo "$spectaclever" "21.07.70" | awk '{print ($1 < $2)}') )); then
+        if (( $(echo "${spectaclever}" "21.07.70" | awk '{print ($1 < $2)}') )); then
             cliparg="--clipboard"
         else
             cliparg="--copy-image"
         fi
 
         screenshot_base_command() {
-            spectacle "$@" --background --nonotify $cliparg --output "${tempfile}"
+            spectacle "$@" --background --nonotify "${cliparg}" --output "${tempfile}"
         }
         
-        if [ "$1" = fullscreen ]; then
+        if [[ "$1" = fullscreen ]]; then
             screenshot_base_command --fullscreen
-        elif [ "$1" = activewindow ]; then
+        elif [[ "$1" = activewindow ]]; then
             screenshot_base_command --activewindow
-        elif [ "$1" = region ]; then
+        elif [[ "$1" = region ]]; then
             screenshot_base_command --region
         fi
-    elif [ "$screenshot_tool" = "scrot" ]; then
+    elif [[ "${screenshot_tool}" = "scrot" ]]; then
         screenshot_base_command() {
+            # shellcheck disable=SC2016 # It's not *supposed* to expand.
             scrot "$@" --quality 100 --silent --pointer "${tempfile}" -e 'xclip -selection clipboard -t image/png $f'
         }
 
-        if [ "$1" = fullscreen ]; then
+        if [[ "$1" = fullscreen ]]; then
             screenshot_base_command
-        elif [ "$1" = activewindow ]; then
+        elif [[ "$1" = activewindow ]]; then
             screenshot_base_command --focused --border --stack
-        elif [ "$1" = region ]; then
+        elif [[ "$1" = region ]]; then
             screenshot_base_command --select --freeze --stack
         fi
-    elif [ "$screenshot_tool" = "gnome-screenshot" ]; then
+    elif [[ "${screenshot_tool}" = "gnome-screenshot" ]]; then
         screenshot_base_command() {
             gnome-screenshot "$@" --clipboard --include-pointer --file="${tempfile}"
         }
 
-        if [ "$1" = fullscreen ]; then
+        if [[ "$1" = fullscreen ]]; then
             screenshot_base_command
-        elif [ "$1" = activewindow ]; then
+        elif [[ "$1" = activewindow ]]; then
             screenshot_base_command --window
-        elif [ "$1" = region ]; then
+        elif [[ "$1" = region ]]; then
             screenshot_base_command --area
         fi
     else
@@ -146,52 +150,53 @@ screenshotter() (
     fi
 
     # Exit if file is empty (no screenshot taken)
-    [ ! -f "$tempfile" ] && exit
+    [[ ! -f "${tempfile}" ]] && exit
 
     # If taking a window screenshot, prefix it with the process name (only works on xorg)
-    if [ "$1" = "--activewindow" ]; then
-        if ! [ "$XDG_SESSION_TYPE" = "wayland" ]; then
+    if [[ "$1" = "--activewindow" ]]; then
+        # shellcheck disable=SC2154 # XDG_SESSION_TYPE is set by the WM.
+        if [[ "${XDG_SESSION_TYPE}" != "wayland" ]]; then
             currentwindow="$(</proc/"$(xdotool getactivewindow getwindowpid)"/comm)_"
         fi
     fi
 
     # Create directory if it doesn't exist
-    [ ! -d "$savedir" ] && mkdir -p "$savedir"
+    [[ ! -d "${savedir}" ]] && mkdir -p "${savedir}"
 
     # Check filesize and convert if too big
     filesize=$(stat -c%s "${tempfile}")
-    if (("$filesize" > "$maxsize")); then
+    if (("${filesize}" > "${maxsize}")); then
         screenshot="${savedir}/${currentwindow}${filename}.avif"
         convert "${tempfile}" "${screenshot}"
         rm "${tempfile}"
     else
         screenshot="${savedir}/${currentwindow}${filename}.png"
-        mv "${tempfile}" "$screenshot"
+        mv "${tempfile}" "${screenshot}"
     fi
 
     # Upload file
-    uploader "$screenshot"
+    uploader "${screenshot}"
 
     # Add to clipboard
-    if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
+    if [[ "${XDG_SESSION_TYPE}" = "wayland" ]]; then
         clipboard_command="wl-copy --trim-newline"
     else
         clipboard_command="xclip -selection clipboard -rmlastnl"
     fi
     # Thanks Oba- KDE! https://bugs.kde.org/show_bug.cgi?id=469238
-    echo "$output" | grep -Po '"link":*"\K[^"]*' | $clipboard_command > /dev/null
+    echo "${output}" | grep -Po '"link":*"\K[^"]*' | ${clipboard_command} > /dev/null
 
     # Send out desktop notifcation
-    notify-send --urgency=low --expire-time=2000 --category=transfer.complete --icon "$icon" "$filename uploaded!"
+    notify-send --urgency=low --expire-time=2000 --category=transfer.complete --icon "${icon}" "${filename} uploaded!"
 )
 
 while getopts awfulsr options; do
-    case $options in
+    case ${options} in
     a) screenshotter region ;;
     w) screenshotter activewindow ;;
     f) screenshotter fullscreen ;;
     u) uploader "${@:2}" ;;
-    l) while IFS=$'\n' read -r line; do uploader "$line"; done <"$2" ;;
+    l) while IFS=$'\n' read -r line; do uploader "${line}"; done <"$2" ;;
     s) shorturlflipper ;;
     r) reupload "${@:2}" ;;
     *) help ;;
@@ -199,4 +204,4 @@ while getopts awfulsr options; do
 done
 
 # Display help if no argument passed
-[ $# -eq 0 ] && help
+[[ $# -eq 0 ]] && help

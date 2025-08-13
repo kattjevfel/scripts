@@ -1,7 +1,8 @@
 #!/bin/bash
+# shellcheck disable=SC2312
 IFS=$'\n'
 
-if [ $# -eq 0 ]; then
+if [[ $# -eq 0 ]]; then
 	echo 'I feast on images and you'\''ve left me hungry!'
 	exit
 fi
@@ -24,54 +25,54 @@ for file in "$@"; do
 	# fuck basename
 	basename=${file%.*}
 	# mime-type
-	mimetype="$(file -b --mime-type "$file")"
+	mimetype="$(file -b --mime-type "${file}")"
 
 	# Make sure file exists and is a picture
-	if ! [[ -f $file ]] || ! [ "$(echo "$mimetype" | cut -d/ -f1)" = image ]; then
-		echoerr "$shortfile is not a valid image!"
+	if ! [[ -f ${file} ]] || [[ "$(echo "${mimetype}" | cut -d/ -f1)" != image ]]; then
+		echoerr "${shortfile} is not a valid image!"
 		continue
 	fi
 
 	# Check that file is not already converted
-	if [[ -f $basename.webp ]]; then
-		echoerr "$shortfile was already converted!"
+	if [[ -f ${basename}.webp ]]; then
+		echoerr "${shortfile} was already converted!"
 		continue
 	fi
 
 	# Filesize before converting in bytes & human readable
-	sizepre="$(stat -c '%s' "$file" 2>/dev/null)"
-	sizeprehuman=$(numfmt --to=iec-i --suffix=B --format='%.1f' "$sizepre" 2>/dev/null)
+	sizepre="$(stat -c '%s' "${file}" 2>/dev/null)"
+	sizeprehuman=$(numfmt --to=iec-i --suffix=B --format='%.1f' "${sizepre}" 2>/dev/null)
 
 	# Print current file (with path) being processed + size in human readable
-	echo -n "Converting $file ($sizeprehuman)... "
+	echo -n "Converting ${file} (${sizeprehuman})... "
 
 	# Command to perform conversion
 	# Use img2webp for all its supported formats, mogrify for anything else
-	if [ "$mimetype" = "image/png" ] || [ "$mimetype" = "image/jpeg" ] || [ "$mimetype" = "image/tiff" ]; then
-		convert_command=(img2webp -lossless "$file" -o "$basename.webp")
+	if [[ "${mimetype}" = "image/png" ]] || [[ "${mimetype}" = "image/jpeg" ]] || [[ "${mimetype}" = "image/tiff" ]]; then
+		convert_command=(img2webp -lossless "${file}" -o "${basename}.webp")
 	else
-		convert_command=(mogrify -define webp:lossless=true -format webp "$file")
+		convert_command=(mogrify -define webp:lossless=true -format webp "${file}")
 	fi
 
 	if ERROR=$({ "${convert_command[@]}"; } 2>&1); then
 		# Filesize after converting in bytes & human readable
-		sizesuf="$(stat -c '%s' "$basename".webp)"
-		sizesufhuman=$(numfmt --to=iec-i --suffix=B --format='%.1f' "$sizesuf")
+		sizesuf="$(stat -c '%s' "${basename}".webp)"
+		sizesufhuman=$(numfmt --to=iec-i --suffix=B --format='%.1f' "${sizesuf}")
 
 		# Give up if bigger than source
-		if (("$sizesuf" > "$sizepre")); then
+		if (("${sizesuf}" > "${sizepre}")); then
 			echo >&2 -e "${cyel}done, but ${shortfile%.*}.webp is bigger than the source, deleting output!${cres}"
-			rm "$basename.webp"
+			rm "${basename}.webp"
 			continue
 		fi
 
 		# Show off fancy stats!
-		echo -e "done! -> ${cgrn}${shortfile%.*}.webp ($sizesufhuman, $(awk "BEGIN {print $sizesuf/$sizepre*100}")% of original size)${cres}"
+		echo -e "done! -> ${cgrn}${shortfile%.*}.webp (${sizesufhuman}, $(awk "BEGIN {print ${sizesuf}/${sizepre}*100}")% of original size)${cres}"
 
 		# Delete original
-		rm "$file"
+		rm "${file}"
 	else
-		echoerr "${ERROR/$directory\//}"
+		echoerr "${ERROR/${directory}\//}"
 		continue
 	fi
 done
