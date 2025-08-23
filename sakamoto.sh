@@ -150,7 +150,9 @@ screenshotter() (
     fi
 
     # Exit if file is empty (no screenshot taken)
-    [[ ! -f "${tempfile}" ]] && exit
+    if [[ ! -f "${tempfile}" ]]; then
+        exit
+    fi
 
     # If taking a window screenshot, prefix it with the process name (only works on xorg)
     if [[ "$1" = "--activewindow" ]]; then
@@ -161,7 +163,9 @@ screenshotter() (
     fi
 
     # Create directory if it doesn't exist
-    [[ ! -d "${savedir}" ]] && mkdir -p "${savedir}"
+    if [[ ! -d "${savedir}" ]]; then
+        mkdir -p "${savedir}"
+    fi
 
     # Check filesize and convert if too big
     filesize=$(stat -c%s "${tempfile}")
@@ -204,4 +208,6 @@ while getopts awfulsr options; do
 done
 
 # Display help if no argument passed
-[[ $# -eq 0 ]] && help
+if [[ $# -eq 0 ]] ; then
+    help
+fi
