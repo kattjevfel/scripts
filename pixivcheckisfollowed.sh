@@ -21,7 +21,7 @@ mapfile -t pixivusersuniq < <(
 
 # Check the is_followed keyword with gallery-dl for each ID, then move it to $outputfolder if it returns False.
 for pixivsingleuser in "${pixivusersuniq[@]}"; do
-    if gallery-dl --list-keywords "${pixivsingleuser[@]/#/https://www.pixiv.net/en/users/}" | grep is_followed -A1 | grep False -q; then
+    if gallery-dl --list-keywords "${pixivsingleuser[@]/#/https://www.pixiv.net/en/users/}" | grep "user\['is_followed'\]" -A1 | grep False -q; then
         mv -v -t "${outputfolder}" "${pixivsingleuser}"*
     fi
 done
