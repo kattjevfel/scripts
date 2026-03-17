@@ -155,7 +155,7 @@ screenshotter() (
     fi
 
     # If taking a window screenshot, prefix it with the process name (only works on xorg)
-    if [[ "$1" = "--activewindow" ]]; then
+    if [[ "$1" = "activewindow" ]]; then
         # shellcheck disable=SC2154 # XDG_SESSION_TYPE is set by the WM.
         if [[ "${XDG_SESSION_TYPE}" != "wayland" ]]; then
             currentwindow="$(</proc/"$(xdotool getactivewindow getwindowpid)"/comm)_"
