@@ -154,10 +154,15 @@ screenshotter() (
         exit
     fi
 
-    # If taking a window screenshot, prefix it with the process name (only works on xorg)
+    # If taking a window screenshot, prefix it with the process name
     if [[ "$1" = "activewindow" ]]; then
-        # shellcheck disable=SC2154 # XDG_SESSION_TYPE is set by the WM.
-        if [[ "${XDG_SESSION_TYPE}" != "wayland" ]]; then
+        # If using KDE+Wayland, use kdotool, else use xdotool (only supported on xorg)
+        # shellcheck disable=SC2154 # XDG_SESSION_TYPE and XDG_SESSION_TYPE is set by the WM.
+        if [[ "${XDG_SESSION_TYPE}" = "wayland" ]]; then
+            if [[ "${XDG_CURRENT_DESKTOP}" = "KDE" ]]; then
+                currentwindow="$(</proc/"$(kdotool getactivewindow getwindowpid)"/comm)_"
+            fi
+        else
             currentwindow="$(</proc/"$(xdotool getactivewindow getwindowpid)"/comm)_"
         fi
     fi
