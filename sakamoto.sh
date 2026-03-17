@@ -6,7 +6,7 @@
 #       >>> Options <<<
 savedir="${HOME}/Pictures/Screenshots"
 filename="$(date '+%Y-%m-%d_%H-%M-%S')"
-maxsize=1048576 # Max filesize before going with lossy avif (in bytes)
+maxsize=1048576 # Max filesize before going with jpg (in bytes)
 
 #SAKAMOTO_TOKEN='YOUR TOKEN GOES HERE (https://sakamoto.moe/user)'
 icon="${HOME}/Pictures/sakamotomoe.webp"
@@ -170,7 +170,7 @@ screenshotter() (
     # Check filesize and convert if too big
     filesize=$(stat -c%s "${tempfile}")
     if (("${filesize}" > "${maxsize}")); then
-        screenshot="${savedir}/${currentwindow}${filename}.avif"
+        screenshot="${savedir}/${currentwindow}${filename}.jpg"
         convert "${tempfile}" "${screenshot}"
         rm "${tempfile}"
     else
