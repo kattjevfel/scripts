@@ -95,6 +95,19 @@ uploader() {
 }
 
 screenshotter() (
+    # If taking a window screenshot, prefix it with the process name (needs to be done first to not get false readings)
+    if [[ "$1" = "activewindow" ]]; then
+        # If using KDE+Wayland, use kdotool, else use xdotool (only supported on xorg)
+        # shellcheck disable=SC2154 # XDG_SESSION_TYPE and XDG_SESSION_TYPE is set by the WM.
+        if [[ "${XDG_SESSION_TYPE}" = "wayland" ]]; then
+            if [[ "${XDG_CURRENT_DESKTOP}" = "KDE" ]]; then
+                currentwindow="$(</proc/"$(kdotool getactivewindow getwindowpid)"/comm)_"
+            fi
+        else
+            currentwindow="$(</proc/"$(xdotool getactivewindow getwindowpid)"/comm)_"
+        fi
+    fi
+
     # The file needs to go *somewhere* before processing
     tempfile=$(mktemp --dry-run --quiet --suffix=.png)
 
@@ -152,19 +165,6 @@ screenshotter() (
     # Exit if file is empty (no screenshot taken)
     if [[ ! -f "${tempfile}" ]]; then
         exit
-    fi
-
-    # If taking a window screenshot, prefix it with the process name
-    if [[ "$1" = "activewindow" ]]; then
-        # If using KDE+Wayland, use kdotool, else use xdotool (only supported on xorg)
-        # shellcheck disable=SC2154 # XDG_SESSION_TYPE and XDG_SESSION_TYPE is set by the WM.
-        if [[ "${XDG_SESSION_TYPE}" = "wayland" ]]; then
-            if [[ "${XDG_CURRENT_DESKTOP}" = "KDE" ]]; then
-                currentwindow="$(</proc/"$(kdotool getactivewindow getwindowpid)"/comm)_"
-            fi
-        else
-            currentwindow="$(</proc/"$(xdotool getactivewindow getwindowpid)"/comm)_"
-        fi
     fi
 
     # Create directory if it doesn't exist
